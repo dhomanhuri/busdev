@@ -33,8 +33,10 @@ export function UserDialog({
     status_aktif: true,
     password: "",
     avatar_url: "",
+    certificate_ids: [] as string[],
   });
   const [managers, setManagers] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -45,20 +47,6 @@ export function UserDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        nama_lengkap: user.nama_lengkap,
-        email: user.email,
-        role: user.role,
-        gm_id: user.gm_id || "",
-        department: user.department || "",
-        status_aktif: user.status_aktif,
-        password: "",
-        avatar_url: user.avatar_url || "",
-      });
-      setPreviewUrl(user.avatar_url || "");
-    }
-
     // Load GMs for dropdown
     const loadManagers = async () => {
       const supabase = createClient();
@@ -69,7 +57,69 @@ export function UserDialog({
       setManagers(data || []);
     };
 
+    // Load certificates for dropdown
+    const loadCertificates = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("status_aktif", true)
+        .order("name");
+      setCertificates(data || []);
+    };
+
     loadManagers();
+    loadCertificates();
+  }, []);
+
+  useEffect(() => {
+    const loadUserCertificates = async () => {
+      if (user) {
+        let certificateIds: string[] = [];
+        
+        // If user has user_certificates loaded from page, use them
+        if (user.user_certificates && Array.isArray(user.user_certificates)) {
+          certificateIds = user.user_certificates
+            .map((uc: any) => uc.certificate?.id || uc.certificate_id)
+            .filter((id: string) => id);
+        } else if (user.id) {
+          // Otherwise, load from database
+          const supabase = createClient();
+          const { data } = await supabase
+            .from("user_certificates")
+            .select("certificate_id")
+            .eq("user_id", user.id);
+          
+          certificateIds = (data || []).map((uc: any) => uc.certificate_id);
+        }
+
+        setFormData({
+          nama_lengkap: user.nama_lengkap,
+          email: user.email,
+          role: user.role,
+          gm_id: user.gm_id || "",
+          department: user.department || "",
+          status_aktif: user.status_aktif,
+          password: "",
+          avatar_url: user.avatar_url || "",
+          certificate_ids: certificateIds,
+        });
+        setPreviewUrl(user.avatar_url || "");
+      } else {
+        setFormData({
+          nama_lengkap: "",
+          email: "",
+          role: "Sales",
+          gm_id: "",
+          department: "",
+          status_aktif: true,
+          password: "",
+          avatar_url: "",
+          certificate_ids: [],
+        });
+      }
+    };
+    loadUserCertificates();
   }, [user]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,6 +256,28 @@ export function UserDialog({
           .eq("id", user.id);
 
         if (updateError) throw updateError;
+
+        // Update user certificates
+        // Delete existing user certificates
+        await supabase
+          .from("user_certificates")
+          .delete()
+          .eq("user_id", user.id);
+
+        // Insert new user certificates
+        if (formData.certificate_ids.length > 0) {
+          const userCertificates = formData.certificate_ids.map((certificateId) => ({
+            user_id: user.id,
+            certificate_id: certificateId,
+          }));
+
+          const { error: ucError } = await supabase
+            .from("user_certificates")
+            .insert(userCertificates);
+
+          if (ucError) throw ucError;
+        }
+
         onSave({ ...user, ...formData });
       } else {
         // Create new user via auth
@@ -265,6 +337,20 @@ export function UserDialog({
             })
             .eq("id", signUpData.user.id);
           if (profileUpdateError) throw profileUpdateError;
+
+          // Insert user certificates
+          if (formData.certificate_ids.length > 0) {
+            const userCertificates = formData.certificate_ids.map((certificateId) => ({
+              user_id: signUpData.user.id,
+              certificate_id: certificateId,
+            }));
+
+            const { error: ucError } = await supabase
+              .from("user_certificates")
+              .insert(userCertificates);
+
+            if (ucError) throw ucError;
+          }
         }
 
         onSave({
@@ -428,6 +514,29 @@ export function UserDialog({
               />
             </div>
           )}
+
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">Certificates</Label>
+            <select
+              multiple
+              value={formData.certificate_ids}
+              onChange={(e) => {
+                const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                setFormData({ ...formData, certificate_ids: selectedIds });
+              }}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
+              size={5}
+            >
+              {certificates.map((certificate) => (
+                <option key={certificate.id} value={certificate.id}>
+                  {certificate.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Hold Ctrl (Windows) or Cmd (Mac) to select multiple certificates
+            </p>
+          </div>
 
           <div className="flex items-center gap-2">
             <input

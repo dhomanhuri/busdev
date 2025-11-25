@@ -12,97 +12,85 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export function ProductDialog({
-  product,
+export function DistributorDialog({
+  distributor,
   onClose,
   onSave,
 }: {
-  product: any | null;
+  distributor: any | null;
   onClose: () => void;
-  onSave: (product: any) => void;
+  onSave: (distributor: any) => void;
 }) {
   const [formData, setFormData] = useState({
-    brand_id: "",
     name: "",
     description: "",
     status_aktif: true,
-    readiness_ids: [] as string[],
+    product_ids: [] as string[],
   });
-  const [brands, setBrands] = useState<any[]>([]);
-  const [readiness, setReadiness] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadBrands = async () => {
+    const loadProducts = async () => {
       const supabase = createClient();
       const { data } = await supabase
-        .from("brands")
+        .from("products")
         .select(`
           *,
-          sub_category:sub_categories(
+          brand:brands(
             *,
-            category:categories(*)
+            sub_category:sub_categories(
+              *,
+              category:categories(*)
+            )
           )
         `)
         .eq("status_aktif", true)
         .order("name");
-      setBrands(data || []);
+      setProducts(data || []);
     };
-    loadBrands();
-
-    const loadReadiness = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("readiness")
-        .select("*")
-        .eq("status_aktif", true)
-        .order("name");
-      setReadiness(data || []);
-    };
-    loadReadiness();
+    loadProducts();
   }, []);
 
   useEffect(() => {
-    const loadProductReadiness = async () => {
-      if (product) {
-        let readinessIds: string[] = [];
+    const loadDistributorProducts = async () => {
+      if (distributor) {
+        let productIds: string[] = [];
         
-        // If product has product_readiness loaded from page, use them
-        if (product.product_readiness && Array.isArray(product.product_readiness)) {
-          readinessIds = product.product_readiness
-            .map((pr: any) => pr.readiness?.id || pr.readiness_id)
+        // If distributor has distributor_products loaded from page, use them
+        if (distributor.distributor_products && Array.isArray(distributor.distributor_products)) {
+          productIds = distributor.distributor_products
+            .map((dp: any) => dp.product?.id || dp.product_id)
             .filter((id: string) => id);
-        } else if (product.id) {
+        } else if (distributor.id) {
           // Otherwise, load from database
           const supabase = createClient();
           const { data } = await supabase
-            .from("product_readiness")
-            .select("readiness_id")
-            .eq("product_id", product.id);
+            .from("distributor_products")
+            .select("product_id")
+            .eq("distributor_id", distributor.id);
           
-          readinessIds = (data || []).map((pr: any) => pr.readiness_id);
+          productIds = (data || []).map((dp: any) => dp.product_id);
         }
 
         setFormData({
-          brand_id: product.brand_id || "",
-          name: product.name || "",
-          description: product.description || "",
-          status_aktif: product.status_aktif ?? true,
-          readiness_ids: readinessIds,
+          name: distributor.name || "",
+          description: distributor.description || "",
+          status_aktif: distributor.status_aktif ?? true,
+          product_ids: productIds,
         });
       } else {
         setFormData({
-          brand_id: "",
           name: "",
           description: "",
           status_aktif: true,
-          readiness_ids: [],
+          product_ids: [],
         });
       }
     };
-    loadProductReadiness();
-  }, [product]);
+    loadDistributorProducts();
+  }, [distributor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,51 +100,49 @@ export function ProductDialog({
     try {
       const supabase = createClient();
 
-      if (product) {
-        // Update existing product
+      if (distributor) {
+        // Update existing distributor
         const { data, error: updateError } = await supabase
-          .from("products")
+          .from("distributors")
           .update({
-            brand_id: formData.brand_id,
             name: formData.name,
             description: formData.description || null,
             status_aktif: formData.status_aktif,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", product.id)
+          .eq("id", distributor.id)
           .select()
           .single();
 
         if (updateError) throw updateError;
 
-        // Update product readiness
-        // Delete existing readiness
+        // Update distributor products
+        // Delete existing distributor products
         await supabase
-          .from("product_readiness")
+          .from("distributor_products")
           .delete()
-          .eq("product_id", product.id);
+          .eq("distributor_id", distributor.id);
 
-        // Insert new readiness
-        if (formData.readiness_ids.length > 0) {
-          const productReadiness = formData.readiness_ids.map((readinessId) => ({
-            product_id: product.id,
-            readiness_id: readinessId,
+        // Insert new distributor products
+        if (formData.product_ids.length > 0) {
+          const distributorProducts = formData.product_ids.map((productId) => ({
+            distributor_id: distributor.id,
+            product_id: productId,
           }));
 
-          const { error: prError } = await supabase
-            .from("product_readiness")
-            .insert(productReadiness);
+          const { error: dpError } = await supabase
+            .from("distributor_products")
+            .insert(distributorProducts);
 
-          if (prError) throw prError;
+          if (dpError) throw dpError;
         }
 
         onSave(data);
       } else {
-        // Create new product
+        // Create new distributor
         const { data, error: createError } = await supabase
-          .from("products")
+          .from("distributors")
           .insert({
-            brand_id: formData.brand_id,
             name: formData.name,
             description: formData.description || null,
             status_aktif: formData.status_aktif,
@@ -166,18 +152,18 @@ export function ProductDialog({
 
         if (createError) throw createError;
 
-        // Insert product readiness
-        if (formData.readiness_ids.length > 0 && data?.id) {
-          const productReadiness = formData.readiness_ids.map((readinessId) => ({
-            product_id: data.id,
-            readiness_id: readinessId,
+        // Insert distributor products
+        if (formData.product_ids.length > 0 && data?.id) {
+          const distributorProducts = formData.product_ids.map((productId) => ({
+            distributor_id: data.id,
+            product_id: productId,
           }));
 
-          const { error: prError } = await supabase
-            .from("product_readiness")
-            .insert(productReadiness);
+          const { error: dpError } = await supabase
+            .from("distributor_products")
+            .insert(distributorProducts);
 
-          if (prError) throw prError;
+          if (dpError) throw dpError;
         }
 
         onSave(data);
@@ -194,32 +180,13 @@ export function ProductDialog({
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
-            {product ? "Edit Product" : "Add New Product"}
+            {distributor ? "Edit Distributor" : "Add New Distributor"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className="text-slate-700 dark:text-slate-300">Brand *</Label>
-            <select
-              value={formData.brand_id}
-              onChange={(e) =>
-                setFormData({ ...formData, brand_id: e.target.value })
-              }
-              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
-              required
-            >
-              <option value="">Select Brand</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.sub_category?.category?.name} - {brand.sub_category?.name} - {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <Label className="text-slate-700 dark:text-slate-300">Name *</Label>
+            <Label className="text-slate-700 dark:text-slate-300">Nama *</Label>
             <Input
               value={formData.name}
               onChange={(e) =>
@@ -231,7 +198,7 @@ export function ProductDialog({
           </div>
 
           <div>
-            <Label className="text-slate-700 dark:text-slate-300">Description</Label>
+            <Label className="text-slate-700 dark:text-slate-300">Deskripsi</Label>
             <textarea
               value={formData.description}
               onChange={(e) =>
@@ -243,25 +210,25 @@ export function ProductDialog({
           </div>
 
           <div>
-            <Label className="text-slate-700 dark:text-slate-300">Readiness</Label>
+            <Label className="text-slate-700 dark:text-slate-300">Products</Label>
             <select
               multiple
-              value={formData.readiness_ids}
+              value={formData.product_ids}
               onChange={(e) => {
                 const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                setFormData({ ...formData, readiness_ids: selectedIds });
+                setFormData({ ...formData, product_ids: selectedIds });
               }}
               className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
               size={5}
             >
-              {readiness.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.brand?.sub_category?.category?.name} - {product.brand?.sub_category?.name} - {product.brand?.name} - {product.name}
                 </option>
               ))}
             </select>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Hold Ctrl (Windows) or Cmd (Mac) to select multiple readiness
+              Hold Ctrl (Windows) or Cmd (Mac) to select multiple products
             </p>
           </div>
 

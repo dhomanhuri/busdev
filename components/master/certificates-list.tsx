@@ -5,50 +5,47 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ProductDialog } from "./product-dialog";
+import { CertificateDialog } from "./certificate-dialog";
 import { Plus, Search, Trash2, Edit } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 
-export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
-  const [products, setProducts] = useState(initialProducts);
+export function CertificatesList({ initialCertificates }: { initialCertificates: any[] }) {
+  const [certificates, setCertificates] = useState(initialCertificates);
   const [search, setSearch] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingCertificate, setEditingCertificate] = useState<any>(null);
 
-  const filteredProducts = products.filter((product) => {
+  const filteredCertificates = certificates.filter((certificate) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.sub_category?.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.sub_category?.category?.name.toLowerCase().includes(search.toLowerCase()) ||
-      (product.description?.toLowerCase().includes(search.toLowerCase()) || false);
+      certificate.name.toLowerCase().includes(search.toLowerCase()) ||
+      (certificate.description?.toLowerCase().includes(search.toLowerCase()) || false);
     return matchesSearch;
   });
 
-  const handleProductSaved = (updatedProduct: any) => {
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-      setEditingProduct(null);
+  const handleCertificateSaved = (updatedCertificate: any) => {
+    if (editingCertificate) {
+      setCertificates(certificates.map(c => c.id === updatedCertificate.id ? updatedCertificate : c));
+      setEditingCertificate(null);
     } else {
-      setProducts([updatedProduct, ...products]);
+      setCertificates([updatedCertificate, ...certificates]);
     }
     setShowDialog(false);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const handleDeleteCertificate = async (certificateId: string) => {
+    if (!confirm("Are you sure you want to delete this certificate? This will also remove all product and user associations.")) return;
 
     try {
       const supabase = createClient();
       const { error } = await supabase
-        .from("products")
+        .from("certificates")
         .delete()
-        .eq("id", productId);
+        .eq("id", certificateId);
 
       if (error) throw error;
-      setProducts(products.filter(p => p.id !== productId));
+      setCertificates(certificates.filter(c => c.id !== certificateId));
     } catch (err: any) {
-      alert("Failed to delete product: " + err.message);
+      alert("Failed to delete certificate: " + err.message);
     }
   };
 
@@ -58,7 +55,7 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
           <Input
-            placeholder="Search product..."
+            placeholder="Search certificate..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
@@ -66,64 +63,61 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
         </div>
         <Button
           onClick={() => {
-            setEditingProduct(null);
+            setEditingCertificate(null);
             setShowDialog(true);
           }}
           className="gap-2 bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />
-          Add Product
+          Add Certificate
         </Button>
       </div>
 
       {showDialog && (
-        <ProductDialog
-          product={editingProduct}
+        <CertificateDialog
+          certificate={editingCertificate}
           onClose={() => {
             setShowDialog(false);
-            setEditingProduct(null);
+            setEditingCertificate(null);
           }}
-          onSave={handleProductSaved}
+          onSave={handleCertificateSaved}
         />
       )}
 
       <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
-          {filteredProducts.length === 0 ? (
-            <p className="text-center text-slate-600 dark:text-slate-400 py-8">No products found</p>
+          {filteredCertificates.length === 0 ? (
+            <p className="text-center text-slate-600 dark:text-slate-400 py-8">No certificates found</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Category</th>
-                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Sub Category</th>
-                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Brand</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Name</th>
-                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Readiness</th>
+                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Description</th>
+                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Products</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Status</th>
+                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Created</th>
                     <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((product) => (
+                  {filteredCertificates.map((certificate) => (
                     <tr
-                      key={product.id}
+                      key={certificate.id}
                       className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     >
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{product.brand?.sub_category?.category?.name || "-"}</td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{product.brand?.sub_category?.name || "-"}</td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{product.brand?.name || "-"}</td>
-                      <td className="py-3 px-4 text-slate-900 dark:text-slate-50 font-medium">{product.name}</td>
+                      <td className="py-3 px-4 text-slate-900 dark:text-slate-50 font-medium">{certificate.name}</td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{certificate.description || "-"}</td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                        {product.product_readiness && product.product_readiness.length > 0 ? (
+                        {certificate.product_certificates && certificate.product_certificates.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {product.product_readiness.map((pr: any) => (
+                            {certificate.product_certificates.map((pc: any) => (
                               <Badge
-                                key={pr.readiness?.id}
-                                className="bg-purple-900 text-purple-200 text-xs"
+                                key={pc.product?.id}
+                                className="bg-blue-900 text-blue-200 text-xs"
                               >
-                                {pr.readiness?.name}
+                                {pc.product?.name}
                               </Badge>
                             ))}
                           </div>
@@ -134,20 +128,23 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
                       <td className="py-3 px-4">
                         <Badge
                           className={
-                            product.status_aktif
+                            certificate.status_aktif
                               ? "bg-green-900 text-green-200"
                               : "bg-gray-900 text-gray-200"
                           }
                         >
-                          {product.status_aktif ? "Active" : "Inactive"}
+                          {certificate.status_aktif ? "Active" : "Inactive"}
                         </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                        {new Date(certificate.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-right gap-2 flex justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setEditingProduct(product);
+                            setEditingCertificate(certificate);
                             setShowDialog(true);
                           }}
                           className="text-blue-400 hover:text-blue-300"
@@ -157,7 +154,7 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
+                          onClick={() => handleDeleteCertificate(certificate.id)}
                           className="text-red-400 hover:text-red-300"
                         >
                           <Trash2 className="h-4 w-4" />

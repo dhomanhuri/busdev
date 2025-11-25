@@ -122,6 +122,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Email</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Role</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Department</th>
+                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Certificates</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Status</th>
                     <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300">Actions</th>
                   </tr>
@@ -170,6 +171,22 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                       </td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                         {user.role === "GM" ? (user.department || "-") : "-"}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                        {user.user_certificates && user.user_certificates.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {user.user_certificates.map((uc: any) => (
+                              <Badge
+                                key={uc.certificate?.id}
+                                className="bg-yellow-900 text-yellow-200 text-xs"
+                              >
+                                {uc.certificate?.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <Badge

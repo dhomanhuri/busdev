@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Settings, LogOut, Database, Package, Tag, Layers, ShoppingBag, Handshake } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Database, Package, Tag, Layers, ShoppingBag, Handshake, CheckCircle, Award, Truck } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
@@ -23,6 +23,9 @@ const masterMenuItems = [
   { label: "Brand", href: "/dashboard/brands", icon: Package },
   { label: "Product", href: "/dashboard/products", icon: ShoppingBag },
   { label: "Partnership", href: "/dashboard/partnerships", icon: Handshake },
+  { label: "Readiness", href: "/dashboard/readiness", icon: CheckCircle },
+  { label: "Certificate", href: "/dashboard/certificates", icon: Award },
+  { label: "Distributor", href: "/dashboard/distributors", icon: Truck },
 ];
 
 export function Sidebar({ user }: { user: any }) {

@@ -21,6 +21,9 @@ export default async function ProductsPage() {
           *,
           category:categories(*)
         )
+      ),
+      product_readiness(
+        readiness:readiness(*)
       )
     `)
     .order("created_at", { ascending: false });

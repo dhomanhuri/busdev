@@ -24,7 +24,12 @@ export default async function UsersPage() {
 
   const { data: users } = await supabase
     .from("users")
-    .select("*")
+    .select(`
+      *,
+      user_certificates(
+        certificate:certificates(*)
+      )
+    `)
     .order("created_at", { ascending: false });
 
   return (
