@@ -1,0 +1,534 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export function ProjectDialog({
+  project,
+  onClose,
+  onSave,
+}: {
+  project: any | null;
+  onClose: () => void;
+  onSave: (project: any) => void;
+}) {
+  const [formData, setFormData] = useState({
+    pid: "",
+    customer_id: "",
+    sales_id: "",
+    distributor_id: "",
+    tanggal: "",
+    status_aktif: true,
+    product_ids: [] as string[],
+    presales_ids: [] as string[],
+    engineer_ids: [] as string[],
+  });
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [sales, setSales] = useState<any[]>([]);
+  const [presales, setPresales] = useState<any[]>([]);
+  const [engineers, setEngineers] = useState<any[]>([]);
+  const [distributors, setDistributors] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadData = async () => {
+      const supabase = createClient();
+
+      // Load customers
+      const { data: customersData } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("status_aktif", true)
+        .order("nama");
+      setCustomers(customersData || []);
+
+      // Load sales (users with role Sales)
+      const { data: salesData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("role", "Sales")
+        .eq("status_aktif", true)
+        .order("nama_lengkap");
+      setSales(salesData || []);
+
+      // Load presales (users with role Presales)
+      const { data: presalesData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("role", "Presales")
+        .eq("status_aktif", true)
+        .order("nama_lengkap");
+      setPresales(presalesData || []);
+
+      // Load engineers (users with role Engineer)
+      const { data: engineersData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("role", "Engineer")
+        .eq("status_aktif", true)
+        .order("nama_lengkap");
+      setEngineers(engineersData || []);
+
+      // Load distributors
+      const { data: distributorsData } = await supabase
+        .from("distributors")
+        .select("*")
+        .eq("status_aktif", true)
+        .order("name");
+      setDistributors(distributorsData || []);
+
+      // Load products
+      const { data: productsData } = await supabase
+        .from("products")
+        .select(`
+          *,
+          brand:brands(
+            *,
+            sub_category:sub_categories(
+              *,
+              category:categories(*)
+            )
+          )
+        `)
+        .eq("status_aktif", true)
+        .order("name");
+      setProducts(productsData || []);
+    };
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    const loadProjectData = async () => {
+      if (project) {
+        let productIds: string[] = [];
+        let presalesIds: string[] = [];
+        let engineerIds: string[] = [];
+
+        // Load junction table data
+        const supabase = createClient();
+
+        if (project.project_products && Array.isArray(project.project_products)) {
+          productIds = project.project_products
+            .map((pp: any) => pp.product?.id || pp.product_id)
+            .filter((id: string) => id);
+        } else if (project.id) {
+          const { data: productsData } = await supabase
+            .from("project_products")
+            .select("product_id")
+            .eq("project_id", project.id);
+          productIds = (productsData || []).map((pp: any) => pp.product_id);
+        }
+
+        if (project.project_presales && Array.isArray(project.project_presales)) {
+          presalesIds = project.project_presales
+            .map((pp: any) => pp.user?.id || pp.user_id)
+            .filter((id: string) => id);
+        } else if (project.id) {
+          const { data: presalesData } = await supabase
+            .from("project_presales")
+            .select("user_id")
+            .eq("project_id", project.id);
+          presalesIds = (presalesData || []).map((pp: any) => pp.user_id);
+        }
+
+        if (project.project_engineers && Array.isArray(project.project_engineers)) {
+          engineerIds = project.project_engineers
+            .map((pe: any) => pe.user?.id || pe.user_id)
+            .filter((id: string) => id);
+        } else if (project.id) {
+          const { data: engineersData } = await supabase
+            .from("project_engineers")
+            .select("user_id")
+            .eq("project_id", project.id);
+          engineerIds = (engineersData || []).map((pe: any) => pe.user_id);
+        }
+
+        // Format tanggal for input[type="date"]
+        const tanggalValue = project.tanggal 
+          ? new Date(project.tanggal).toISOString().split('T')[0]
+          : "";
+
+        setFormData({
+          pid: project.pid || "",
+          customer_id: project.customer_id || "",
+          sales_id: project.sales_id || "",
+          distributor_id: project.distributor_id || "",
+          tanggal: tanggalValue,
+          status_aktif: project.status_aktif ?? true,
+          product_ids: productIds,
+          presales_ids: presalesIds,
+          engineer_ids: engineerIds,
+        });
+      } else {
+        setFormData({
+          pid: "",
+          customer_id: "",
+          sales_id: "",
+          distributor_id: "",
+          tanggal: "",
+          status_aktif: true,
+          product_ids: [],
+          presales_ids: [],
+          engineer_ids: [],
+        });
+      }
+    };
+    loadProjectData();
+  }, [project]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const supabase = createClient();
+
+      if (project) {
+        // Update existing project
+        const { data, error: updateError } = await supabase
+          .from("projects")
+          .update({
+            pid: formData.pid,
+            customer_id: formData.customer_id,
+            sales_id: formData.sales_id,
+            distributor_id: formData.distributor_id || null,
+            tanggal: formData.tanggal,
+            status_aktif: formData.status_aktif,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", project.id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+
+        // Update project products
+        await supabase
+          .from("project_products")
+          .delete()
+          .eq("project_id", project.id);
+        if (formData.product_ids.length > 0) {
+          const projectProducts = formData.product_ids.map((productId) => ({
+            project_id: project.id,
+            product_id: productId,
+          }));
+          const { error: ppError } = await supabase
+            .from("project_products")
+            .insert(projectProducts);
+          if (ppError) throw ppError;
+        }
+
+        // Update project presales
+        await supabase
+          .from("project_presales")
+          .delete()
+          .eq("project_id", project.id);
+        if (formData.presales_ids.length > 0) {
+          const projectPresales = formData.presales_ids.map((userId) => ({
+            project_id: project.id,
+            user_id: userId,
+          }));
+          const { error: ppsError } = await supabase
+            .from("project_presales")
+            .insert(projectPresales);
+          if (ppsError) throw ppsError;
+        }
+
+        // Update project engineers
+        await supabase
+          .from("project_engineers")
+          .delete()
+          .eq("project_id", project.id);
+        if (formData.engineer_ids.length > 0) {
+          const projectEngineers = formData.engineer_ids.map((userId) => ({
+            project_id: project.id,
+            user_id: userId,
+          }));
+          const { error: peError } = await supabase
+            .from("project_engineers")
+            .insert(projectEngineers);
+          if (peError) throw peError;
+        }
+
+        onSave(data);
+      } else {
+        // Create new project
+        const { data, error: createError } = await supabase
+          .from("projects")
+          .insert({
+            pid: formData.pid,
+            customer_id: formData.customer_id,
+            sales_id: formData.sales_id,
+            distributor_id: formData.distributor_id || null,
+            tanggal: formData.tanggal,
+            status_aktif: formData.status_aktif,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        // Insert project products
+        if (formData.product_ids.length > 0 && data?.id) {
+          const projectProducts = formData.product_ids.map((productId) => ({
+            project_id: data.id,
+            product_id: productId,
+          }));
+          const { error: ppError } = await supabase
+            .from("project_products")
+            .insert(projectProducts);
+          if (ppError) throw ppError;
+        }
+
+        // Insert project presales
+        if (formData.presales_ids.length > 0 && data?.id) {
+          const projectPresales = formData.presales_ids.map((userId) => ({
+            project_id: data.id,
+            user_id: userId,
+          }));
+          const { error: ppsError } = await supabase
+            .from("project_presales")
+            .insert(projectPresales);
+          if (ppsError) throw ppsError;
+        }
+
+        // Insert project engineers
+        if (formData.engineer_ids.length > 0 && data?.id) {
+          const projectEngineers = formData.engineer_ids.map((userId) => ({
+            project_id: data.id,
+            user_id: userId,
+          }));
+          const { error: peError } = await supabase
+            .from("project_engineers")
+            .insert(projectEngineers);
+          if (peError) throw peError;
+        }
+
+        onSave(data);
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-slate-900 dark:text-slate-50">
+            {project ? "Edit Project" : "Add New Project"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">PID (Project ID) *</Label>
+              <Input
+                value={formData.pid}
+                onChange={(e) =>
+                  setFormData({ ...formData, pid: e.target.value })
+                }
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+                required
+              />
+            </div>
+
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Tanggal *</Label>
+              <Input
+                type="date"
+                value={formData.tanggal}
+                onChange={(e) =>
+                  setFormData({ ...formData, tanggal: e.target.value })
+                }
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">Customer *</Label>
+            <select
+              value={formData.customer_id}
+              onChange={(e) =>
+                setFormData({ ...formData, customer_id: e.target.value })
+              }
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
+              required
+            >
+              <option value="">Select Customer</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.nama}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Sales *</Label>
+              <select
+                value={formData.sales_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, sales_id: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
+                required
+              >
+                <option value="">Select Sales</option>
+                {sales.map((sale) => (
+                  <option key={sale.id} value={sale.id}>
+                    {sale.nama_lengkap}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Distributor</Label>
+              <select
+                value={formData.distributor_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, distributor_id: e.target.value })
+                }
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
+              >
+                <option value="">Select Distributor</option>
+                {distributors.map((distributor) => (
+                  <option key={distributor.id} value={distributor.id}>
+                    {distributor.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">Products *</Label>
+            <select
+              multiple
+              value={formData.product_ids}
+              onChange={(e) => {
+                const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                setFormData({ ...formData, product_ids: selectedIds });
+              }}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
+              size={5}
+              required
+            >
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.brand?.sub_category?.category?.name} - {product.brand?.sub_category?.name} - {product.brand?.name} - {product.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Hold Ctrl (Windows) or Cmd (Mac) to select multiple products
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Presales</Label>
+              <select
+                multiple
+                value={formData.presales_ids}
+                onChange={(e) => {
+                  const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                  setFormData({ ...formData, presales_ids: selectedIds });
+                }}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
+                size={5}
+              >
+                {presales.map((presale) => (
+                  <option key={presale.id} value={presale.id}>
+                    {presale.nama_lengkap}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Hold Ctrl (Windows) or Cmd (Mac) to select multiple
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Engineers</Label>
+              <select
+                multiple
+                value={formData.engineer_ids}
+                onChange={(e) => {
+                  const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                  setFormData({ ...formData, engineer_ids: selectedIds });
+                }}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
+                size={5}
+              >
+                {engineers.map((engineer) => (
+                  <option key={engineer.id} value={engineer.id}>
+                    {engineer.nama_lengkap}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Hold Ctrl (Windows) or Cmd (Mac) to select multiple
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="status_aktif"
+              checked={formData.status_aktif}
+              onChange={(e) =>
+                setFormData({ ...formData, status_aktif: e.target.checked })
+              }
+              className="rounded"
+            />
+            <Label htmlFor="status_aktif" className="text-slate-700 dark:text-slate-300">
+              Active Status
+            </Label>
+          </div>
+
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+
+          <div className="flex gap-2 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isLoading ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

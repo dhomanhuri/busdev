@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Settings, LogOut, Database, Package, Tag, Layers, ShoppingBag, Handshake, CheckCircle, Award, Truck } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Database, Package, Tag, Layers, ShoppingBag, Handshake, CheckCircle, Award, Truck, UserCircle, FolderKanban } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Projects", href: "/dashboard/projects", icon: FolderKanban },
   { label: "Profile Settings", href: "/dashboard/profile", icon: Settings },
 ];
 
@@ -26,6 +27,7 @@ const masterMenuItems = [
   { label: "Readiness", href: "/dashboard/readiness", icon: CheckCircle },
   { label: "Certificate", href: "/dashboard/certificates", icon: Award },
   { label: "Distributor", href: "/dashboard/distributors", icon: Truck },
+  { label: "Customer", href: "/dashboard/customers", icon: UserCircle },
 ];
 
 export function Sidebar({ user }: { user: any }) {
