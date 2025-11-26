@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import {
   Dialog,
@@ -27,6 +28,8 @@ export function ProjectDialog({
     sales_id: "",
     distributor_id: "",
     tanggal: "",
+    description: "",
+    project_manager_id: "",
     status_aktif: true,
     product_ids: [] as string[],
     presales_ids: [] as string[],
@@ -36,6 +39,7 @@ export function ProjectDialog({
   const [sales, setSales] = useState<any[]>([]);
   const [presales, setPresales] = useState<any[]>([]);
   const [engineers, setEngineers] = useState<any[]>([]);
+  const [projectManagers, setProjectManagers] = useState<any[]>([]);
   const [distributors, setDistributors] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +83,15 @@ export function ProjectDialog({
         .eq("status_aktif", true)
         .order("nama_lengkap");
       setEngineers(engineersData || []);
+
+      // Load project managers (users with role Project Manager)
+      const { data: projectManagersData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("role", "Project Manager")
+        .eq("status_aktif", true)
+        .order("nama_lengkap");
+      setProjectManagers(projectManagersData || []);
 
       // Load distributors
       const { data: distributorsData } = await supabase
@@ -165,6 +178,8 @@ export function ProjectDialog({
           sales_id: project.sales_id || "",
           distributor_id: project.distributor_id || "",
           tanggal: tanggalValue,
+          description: project.description || "",
+          project_manager_id: project.project_manager_id || "",
           status_aktif: project.status_aktif ?? true,
           product_ids: productIds,
           presales_ids: presalesIds,
@@ -177,6 +192,8 @@ export function ProjectDialog({
           sales_id: "",
           distributor_id: "",
           tanggal: "",
+          description: "",
+          project_manager_id: "",
           status_aktif: true,
           product_ids: [],
           presales_ids: [],
@@ -200,11 +217,13 @@ export function ProjectDialog({
         const { data, error: updateError } = await supabase
           .from("projects")
           .update({
-            pid: formData.pid,
+            pid: formData.pid || null,
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
             distributor_id: formData.distributor_id || null,
             tanggal: formData.tanggal,
+            description: formData.description || null,
+            project_manager_id: formData.project_manager_id || null,
             status_aktif: formData.status_aktif,
             updated_at: new Date().toISOString(),
           })
@@ -262,17 +281,51 @@ export function ProjectDialog({
           if (peError) throw peError;
         }
 
-        onSave(data);
+        // Reload project with all relations
+        const { data: updatedProject, error: reloadError } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            customer:customers(*),
+            sales:users!sales_id(*),
+            project_manager:users!project_manager_id(*),
+            distributor:distributors(*),
+            project_products(
+              product:products(
+                *,
+                brand:brands(
+                  *,
+                  sub_category:sub_categories(
+                    *,
+                    category:categories(*)
+                  )
+                )
+              )
+            ),
+            project_presales(
+              user:users(*)
+            ),
+            project_engineers(
+              user:users(*)
+            )
+          `)
+          .eq("id", project.id)
+          .single();
+
+        if (reloadError) throw reloadError;
+        onSave(updatedProject);
       } else {
         // Create new project
         const { data, error: createError } = await supabase
           .from("projects")
           .insert({
-            pid: formData.pid,
+            pid: formData.pid || null,
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
             distributor_id: formData.distributor_id || null,
             tanggal: formData.tanggal,
+            description: formData.description || null,
+            project_manager_id: formData.project_manager_id || null,
             status_aktif: formData.status_aktif,
           })
           .select()
@@ -316,7 +369,39 @@ export function ProjectDialog({
           if (peError) throw peError;
         }
 
-        onSave(data);
+        // Reload project with all relations
+        const { data: newProject, error: reloadError } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            customer:customers(*),
+            sales:users!sales_id(*),
+            project_manager:users!project_manager_id(*),
+            distributor:distributors(*),
+            project_products(
+              product:products(
+                *,
+                brand:brands(
+                  *,
+                  sub_category:sub_categories(
+                    *,
+                    category:categories(*)
+                  )
+                )
+              )
+            ),
+            project_presales(
+              user:users(*)
+            ),
+            project_engineers(
+              user:users(*)
+            )
+          `)
+          .eq("id", data.id)
+          .single();
+
+        if (reloadError) throw reloadError;
+        onSave(newProject);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -337,14 +422,13 @@ export function ProjectDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-slate-700 dark:text-slate-300">PID (Project ID) *</Label>
+              <Label className="text-slate-700 dark:text-slate-300">PID (Project ID)</Label>
               <Input
                 value={formData.pid}
                 onChange={(e) =>
                   setFormData({ ...formData, pid: e.target.value })
                 }
                 className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
-                required
               />
             </div>
 
@@ -381,9 +465,22 @@ export function ProjectDialog({
             </select>
           </div>
 
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">Description</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+              rows={4}
+              placeholder="Enter project description..."
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-slate-700 dark:text-slate-300">Sales *</Label>
+              <Label className="text-slate-700 dark:text-slate-300">AM *</Label>
               <select
                 value={formData.sales_id}
                 onChange={(e) =>
@@ -392,7 +489,7 @@ export function ProjectDialog({
                 className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
                 required
               >
-                <option value="">Select Sales</option>
+                <option value="">Select AM</option>
                 {sales.map((sale) => (
                   <option key={sale.id} value={sale.id}>
                     {sale.nama_lengkap}
@@ -418,6 +515,24 @@ export function ProjectDialog({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">Project Manager</Label>
+            <select
+              value={formData.project_manager_id}
+              onChange={(e) =>
+                setFormData({ ...formData, project_manager_id: e.target.value })
+              }
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
+            >
+              <option value="">Select Project Manager</option>
+              {projectManagers.map((pm) => (
+                <option key={pm.id} value={pm.id}>
+                  {pm.nama_lengkap}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

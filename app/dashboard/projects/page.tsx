@@ -16,7 +16,8 @@ export default async function ProjectsPage() {
     .select(`
       *,
       customer:customers(*),
-      sales:users(*),
+      sales:users!sales_id(*),
+      project_manager:users!project_manager_id(*),
       distributor:distributors(*),
       project_products(
         product:products(
