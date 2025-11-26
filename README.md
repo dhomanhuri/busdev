@@ -2,6 +2,7 @@
 
 Minimal Next.js project dengan fitur Login dan User Management menggunakan Supabase.
 
+
 ## Fitur
 
 - ✅ Authentication (Login/Logout)
