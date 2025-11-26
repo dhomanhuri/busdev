@@ -433,7 +433,7 @@ export function ProjectDialog({
             </div>
 
             <div>
-              <Label className="text-slate-700 dark:text-slate-300">Tanggal *</Label>
+              <Label className="text-slate-700 dark:text-slate-300">Date *</Label>
               <Input
                 type="date"
                 value={formData.tanggal}

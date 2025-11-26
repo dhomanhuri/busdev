@@ -6,24 +6,57 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProductDialog } from "./product-dialog";
-import { Plus, Search, Trash2, Edit } from 'lucide-react';
+import { ListControls } from "@/components/ui/list-controls";
+import { Plus, Trash2, Edit } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 
 export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.sub_category?.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.brand?.sub_category?.category?.name.toLowerCase().includes(search.toLowerCase()) ||
-      (product.description?.toLowerCase().includes(search.toLowerCase()) || false);
-    return matchesSearch;
-  });
+  const filteredAndSortedProducts = products
+    .filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.brand?.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.brand?.sub_category?.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.brand?.sub_category?.category?.name.toLowerCase().includes(search.toLowerCase()) ||
+        (product.description?.toLowerCase().includes(search.toLowerCase()) || false);
+      
+      const matchesStatus = !statusFilter ||
+        (statusFilter === "active" && product.status_aktif) ||
+        (statusFilter === "inactive" && !product.status_aktif);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      switch (sortBy) {
+        case "name_asc":
+          return a.name.localeCompare(b.name);
+        case "name_desc":
+          return b.name.localeCompare(a.name);
+        case "category_asc":
+          return (a.brand?.sub_category?.category?.name || "").localeCompare(b.brand?.sub_category?.category?.name || "");
+        case "category_desc":
+          return (b.brand?.sub_category?.category?.name || "").localeCompare(a.brand?.sub_category?.category?.name || "");
+        case "brand_asc":
+          return (a.brand?.name || "").localeCompare(b.brand?.name || "");
+        case "brand_desc":
+          return (b.brand?.name || "").localeCompare(a.brand?.name || "");
+        case "created_asc":
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "created_desc":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        default:
+          return 0;
+      }
+    });
 
   const handleProductSaved = (updatedProduct: any) => {
     if (editingProduct) {
@@ -54,14 +87,31 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
-          <Input
-            placeholder="Search product..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+      <div className="flex gap-4 items-start">
+        <div className="flex-1">
+          <ListControls
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search product..."
+            filterValue={statusFilter}
+            onFilterChange={setStatusFilter}
+            filterOptions={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            filterLabel="Status"
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: "name_asc", label: "Name (A-Z)" },
+              { value: "name_desc", label: "Name (Z-A)" },
+              { value: "category_asc", label: "Category (A-Z)" },
+              { value: "category_desc", label: "Category (Z-A)" },
+              { value: "brand_asc", label: "Brand (A-Z)" },
+              { value: "brand_desc", label: "Brand (Z-A)" },
+              { value: "created_asc", label: "Created (Oldest)" },
+              { value: "created_desc", label: "Created (Newest)" },
+            ]}
           />
         </div>
         <Button
@@ -89,7 +139,7 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
 
       <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
-          {filteredProducts.length === 0 ? (
+          {filteredAndSortedProducts.length === 0 ? (
             <p className="text-center text-slate-600 dark:text-slate-400 py-8">No products found</p>
           ) : (
             <div className="overflow-x-auto">
@@ -106,7 +156,7 @@ export function ProductsList({ initialProducts }: { initialProducts: any[] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((product) => (
+                  {filteredAndSortedProducts.map((product) => (
                     <tr
                       key={product.id}
                       className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"

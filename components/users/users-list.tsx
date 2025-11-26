@@ -7,23 +7,50 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { UserDialog } from "./user-dialog";
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { ListControls } from "@/components/ui/list-controls";
+import { Plus, Trash2 } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 
 export function UsersList({ initialUsers }: { initialUsers: any[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = !roleFilter || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  const filteredAndSortedUsers = users
+    .filter((user) => {
+      const matchesSearch =
+        user.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase());
+      const matchesRole = !roleFilter || user.role === roleFilter;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      switch (sortBy) {
+        case "name_asc":
+          return a.nama_lengkap.localeCompare(b.nama_lengkap);
+        case "name_desc":
+          return b.nama_lengkap.localeCompare(a.nama_lengkap);
+        case "email_asc":
+          return a.email.localeCompare(b.email);
+        case "email_desc":
+          return b.email.localeCompare(a.email);
+        case "role_asc":
+          return a.role.localeCompare(b.role);
+        case "role_desc":
+          return b.role.localeCompare(a.role);
+        case "created_asc":
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "created_desc":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        default:
+          return 0;
+      }
+    });
 
   const handleUserSaved = async (updatedUser: any) => {
     // Refresh user data to get latest avatar_url
@@ -62,29 +89,37 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
-          <Input
-            placeholder="Search user..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+      <div className="flex gap-4 items-start">
+        <div className="flex-1">
+          <ListControls
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search user..."
+            filterValue={roleFilter}
+            onFilterChange={setRoleFilter}
+            filterOptions={[
+              { value: "Admin", label: "Admin" },
+              { value: "GM", label: "General Manager" },
+              { value: "Sales", label: "AM" },
+              { value: "Presales", label: "Presales" },
+              { value: "Engineer", label: "Engineer" },
+              { value: "Project Manager", label: "Project Manager" },
+            ]}
+            filterLabel="Roles"
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: "name_asc", label: "Name (A-Z)" },
+              { value: "name_desc", label: "Name (Z-A)" },
+              { value: "email_asc", label: "Email (A-Z)" },
+              { value: "email_desc", label: "Email (Z-A)" },
+              { value: "role_asc", label: "Role (A-Z)" },
+              { value: "role_desc", label: "Role (Z-A)" },
+              { value: "created_asc", label: "Created (Oldest)" },
+              { value: "created_desc", label: "Created (Newest)" },
+            ]}
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-        >
-          <option value="">All Roles</option>
-          <option value="Admin">Admin</option>
-          <option value="GM">General Manager</option>
-          <option value="Sales">AM</option>
-          <option value="Presales">Presales</option>
-          <option value="Engineer">Engineer</option>
-          <option value="Project Manager">Project Manager</option>
-        </select>
         <Button
           onClick={() => {
             setEditingUser(null);
@@ -110,7 +145,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
 
       <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
-          {filteredUsers.length === 0 ? (
+          {filteredAndSortedUsers.length === 0 ? (
             <p className="text-center text-slate-600 dark:text-slate-400 py-8">No users found</p>
           ) : (
             <div className="overflow-x-auto">
@@ -128,7 +163,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
+                  {filteredAndSortedUsers.map((user) => (
                     <tr
                       key={user.id}
                       className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"

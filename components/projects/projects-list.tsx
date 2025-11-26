@@ -7,25 +7,58 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProjectDialog } from "./project-dialog";
 import { ProjectDetailDialog } from "./project-detail-dialog";
-import { Plus, Search, Trash2, Edit, Eye } from 'lucide-react';
+import { ListControls } from "@/components/ui/list-controls";
+import { Plus, Trash2, Edit, Eye } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 
 export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = useState(initialProjects);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
   const [viewingProject, setViewingProject] = useState<any>(null);
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      (project.pid?.toLowerCase().includes(search.toLowerCase()) || false) ||
-      project.customer?.nama?.toLowerCase().includes(search.toLowerCase()) ||
-      project.sales?.nama_lengkap?.toLowerCase().includes(search.toLowerCase()) ||
-      (project.distributor?.name?.toLowerCase().includes(search.toLowerCase()) || false);
-    return matchesSearch;
-  });
+  const filteredAndSortedProjects = projects
+    .filter((project) => {
+      const matchesSearch =
+        (project.pid?.toLowerCase().includes(search.toLowerCase()) || false) ||
+        project.customer?.nama?.toLowerCase().includes(search.toLowerCase()) ||
+        project.sales?.nama_lengkap?.toLowerCase().includes(search.toLowerCase()) ||
+        (project.distributor?.name?.toLowerCase().includes(search.toLowerCase()) || false);
+      
+      const matchesStatus = !statusFilter || 
+        (statusFilter === "active" && project.status_aktif) ||
+        (statusFilter === "inactive" && !project.status_aktif);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      switch (sortBy) {
+        case "pid_asc":
+          return (a.pid || "").localeCompare(b.pid || "");
+        case "pid_desc":
+          return (b.pid || "").localeCompare(a.pid || "");
+        case "customer_asc":
+          return (a.customer?.nama || "").localeCompare(b.customer?.nama || "");
+        case "customer_desc":
+          return (b.customer?.nama || "").localeCompare(a.customer?.nama || "");
+        case "tanggal_asc":
+          return new Date(a.tanggal || 0).getTime() - new Date(b.tanggal || 0).getTime();
+        case "tanggal_desc":
+          return new Date(b.tanggal || 0).getTime() - new Date(a.tanggal || 0).getTime();
+        case "created_asc":
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "created_desc":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        default:
+          return 0;
+      }
+    });
 
   const handleProjectSaved = (updatedProject: any) => {
     if (editingProject) {
@@ -56,14 +89,31 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
-          <Input
-            placeholder="Search project by PID, customer, AM, or distributor..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+      <div className="flex gap-4 items-start">
+        <div className="flex-1">
+          <ListControls
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search project by PID, customer, AM, or distributor..."
+            filterValue={statusFilter}
+            onFilterChange={setStatusFilter}
+            filterOptions={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            filterLabel="Status"
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: "pid_asc", label: "PID (A-Z)" },
+              { value: "pid_desc", label: "PID (Z-A)" },
+              { value: "customer_asc", label: "Customer (A-Z)" },
+              { value: "customer_desc", label: "Customer (Z-A)" },
+              { value: "tanggal_asc", label: "Date (Oldest)" },
+              { value: "tanggal_desc", label: "Date (Newest)" },
+              { value: "created_asc", label: "Created (Oldest)" },
+              { value: "created_desc", label: "Created (Newest)" },
+            ]}
           />
         </div>
         <Button
@@ -101,7 +151,7 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
 
       <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
-          {filteredProjects.length === 0 ? (
+          {filteredAndSortedProjects.length === 0 ? (
             <p className="text-center text-slate-600 dark:text-slate-400 py-8">No projects found</p>
           ) : (
             <div className="overflow-x-auto">
@@ -111,13 +161,13 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">PID</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Customer</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">AM</th>
-                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Tanggal</th>
+                    <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Date</th>
                     <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300">Status</th>
                     <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProjects.map((project) => (
+                  {filteredAndSortedProjects.map((project) => (
                     <tr
                       key={project.id}
                       className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"

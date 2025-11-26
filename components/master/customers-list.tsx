@@ -6,21 +6,46 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CustomerDialog } from "./customer-dialog";
-import { Plus, Search, Trash2, Edit } from 'lucide-react';
+import { ListControls } from "@/components/ui/list-controls";
+import { Plus, Trash2, Edit } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 
 export function CustomersList({ initialCustomers }: { initialCustomers: any[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.nama.toLowerCase().includes(search.toLowerCase()) ||
-      (customer.description?.toLowerCase().includes(search.toLowerCase()) || false);
-    return matchesSearch;
-  });
+  const filteredAndSortedCustomers = customers
+    .filter((customer) => {
+      const matchesSearch =
+        customer.nama.toLowerCase().includes(search.toLowerCase()) ||
+        (customer.description?.toLowerCase().includes(search.toLowerCase()) || false);
+      
+      const matchesStatus = !statusFilter ||
+        (statusFilter === "active" && customer.status_aktif) ||
+        (statusFilter === "inactive" && !customer.status_aktif);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      switch (sortBy) {
+        case "name_asc":
+          return a.nama.localeCompare(b.nama);
+        case "name_desc":
+          return b.nama.localeCompare(a.nama);
+        case "created_asc":
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        case "created_desc":
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        default:
+          return 0;
+      }
+    });
 
   const handleCustomerSaved = (updatedCustomer: any) => {
     if (editingCustomer) {
@@ -51,14 +76,27 @@ export function CustomersList({ initialCustomers }: { initialCustomers: any[] })
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
-          <Input
-            placeholder="Search customer..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+      <div className="flex gap-4 items-start">
+        <div className="flex-1">
+          <ListControls
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search customer..."
+            filterValue={statusFilter}
+            onFilterChange={setStatusFilter}
+            filterOptions={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            filterLabel="Status"
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: "name_asc", label: "Name (A-Z)" },
+              { value: "name_desc", label: "Name (Z-A)" },
+              { value: "created_asc", label: "Created (Oldest)" },
+              { value: "created_desc", label: "Created (Newest)" },
+            ]}
           />
         </div>
         <Button
@@ -86,7 +124,7 @@ export function CustomersList({ initialCustomers }: { initialCustomers: any[] })
 
       <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
-          {filteredCustomers.length === 0 ? (
+          {filteredAndSortedCustomers.length === 0 ? (
             <p className="text-center text-slate-600 dark:text-slate-400 py-8">No customers found</p>
           ) : (
             <div className="overflow-x-auto">
@@ -101,7 +139,7 @@ export function CustomersList({ initialCustomers }: { initialCustomers: any[] })
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomers.map((customer) => (
+                  {filteredAndSortedCustomers.map((customer) => (
                     <tr
                       key={customer.id}
                       className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"

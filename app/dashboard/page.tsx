@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsTrendChart } from "@/components/dashboard/projects-chart";
+import { RecentProjects } from "@/components/dashboard/recent-projects";
+import { TopCustomers } from "@/components/dashboard/top-customers";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -21,8 +24,53 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  // Fetch all data for dashboard
+  const [projectsResult, customersResult, productsResult, usersResult] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(`
+        *,
+        customer:customers(*),
+        sales:users!sales_id(*),
+        project_manager:users!project_manager_id(*)
+      `)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("customers")
+      .select("*")
+      .eq("status_aktif", true),
+    supabase
+      .from("products")
+      .select("*")
+      .eq("status_aktif", true),
+    supabase
+      .from("users")
+      .select("*")
+      .eq("status_aktif", true),
+  ]);
+
+  const projects = projectsResult.data || [];
+  const customers = customersResult.data || [];
+  const products = productsResult.data || [];
+  const users = usersResult.data || [];
+
+  // Calculate statistics
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter(p => p.status_aktif).length;
+  const totalCustomers = customers.length;
+  const totalProducts = products.length;
+  const totalUsers = users.length;
+
+  // Filter projects based on user role
+  let filteredProjects = projects;
+  if (userProfile.role === 'Sales') {
+    filteredProjects = projects.filter(p => p.sales_id === user.id);
+  } else if (userProfile.role === 'Project Manager') {
+    filteredProjects = projects.filter(p => p.project_manager_id === user.id);
+  }
+
   return (
-    <div className="p-6 md:p-8 min-h-screen">
+    <div className="p-6 md:p-8 min-h-screen space-y-6">
       <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg">
@@ -37,34 +85,45 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-slate-50">Welcome</CardTitle>
-            <CardDescription className="text-slate-600 dark:text-slate-400">
-              This is a minimal base project with login and user management features.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <p className="text-slate-700 dark:text-slate-300">
-                  <strong>Role:</strong> {userProfile.role === 'Sales' ? 'AM' : userProfile.role}
-                </p>
-                <p className="text-slate-700 dark:text-slate-300">
-                  <strong>Email:</strong> {userProfile.email}
-                </p>
-              </div>
-              {userProfile.role === 'Admin' && (
-                <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    As an Admin, you can manage users from the User Management menu.
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Total Projects"
+          value={userProfile.role === 'Admin' || userProfile.role === 'GM' ? totalProjects : filteredProjects.length}
+          icon="projects"
+          description={userProfile.role === 'Admin' || userProfile.role === 'GM' ? `${activeProjects} active` : `${filteredProjects.filter(p => p.status_aktif).length} active`}
+        />
+        <StatsCard
+          title="Customers"
+          value={totalCustomers}
+          icon="customers"
+          description="Active customers"
+        />
+        <StatsCard
+          title="Products"
+          value={totalProducts}
+          icon="products"
+          description="Active products"
+        />
+        <StatsCard
+          title="Users"
+          value={totalUsers}
+          icon="users"
+          description="Active users"
+        />
+      </div>
+
+      {/* Charts and Recent Activities */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProjectsByStatusChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+        <ProjectsByAMChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+      </div>
+
+      <ProjectsTrendChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentProjects projects={filteredProjects} />
+        <TopCustomers projects={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
       </div>
     </div>
   );

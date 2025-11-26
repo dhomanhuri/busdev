@@ -43,7 +43,7 @@ export function ProjectDetailDialog({
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Tanggal
+                  Date
                 </label>
                 <p className="text-slate-900 dark:text-slate-50 mt-1">
                   {project.tanggal
