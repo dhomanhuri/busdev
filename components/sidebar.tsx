@@ -37,24 +37,31 @@ export function Sidebar({ user }: { user: any }) {
     <Link
       href={item.href}
       className={cn(
-        "group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
+        "group relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300",
         isActive
-          ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30"
-          : "text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100/50 dark:hover:from-slate-700/50 dark:hover:to-slate-700/50 hover:text-orange-600 dark:hover:text-white"
+          ? "bg-gradient-to-r from-orange-50 to-orange-100/80 dark:from-orange-900/30 dark:to-orange-800/20 text-orange-700 dark:text-orange-300 border-l-4 border-orange-500 dark:border-orange-400 shadow-sm"
+          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-700/30 hover:text-orange-600 dark:hover:text-orange-400 border-l-4 border-transparent"
       )}
     >
-      {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg" />
-      )}
       <div className={cn(
-        "flex items-center justify-center transition-transform duration-300",
-        isActive ? "scale-110" : "group-hover:scale-110"
+        "flex items-center justify-center transition-all duration-300 rounded-lg p-1.5",
+        isActive 
+          ? "bg-orange-500/10 dark:bg-orange-400/20 scale-110" 
+          : "group-hover:bg-orange-100/50 dark:group-hover:bg-orange-900/20 group-hover:scale-110"
       )}>
-        <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-sm")} />
+        <item.icon className={cn(
+          "h-5 w-5 transition-colors duration-300",
+          isActive 
+            ? "text-orange-600 dark:text-orange-400" 
+            : "text-slate-600 dark:text-slate-400 group-hover:text-orange-600 dark:group-hover:text-orange-400"
+        )} />
       </div>
-      <span className="flex-1">{item.label}</span>
+      <span className={cn(
+        "flex-1 transition-colors duration-300",
+        isActive && "font-semibold"
+      )}>{item.label}</span>
       {isActive && (
-        <ChevronRight className="h-4 w-4 opacity-70" />
+        <div className="h-2 w-2 rounded-full bg-orange-500 dark:bg-orange-400 animate-pulse" />
       )}
     </Link>
   );
