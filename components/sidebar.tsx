@@ -49,7 +49,7 @@ export function Sidebar({ user }: { user: any }) {
             <LayoutDashboard className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-slate-900 dark:text-slate-50 tracking-tight">Base Project</h1>
+            <h1 className="font-bold text-lg text-slate-900 dark:text-slate-50 tracking-tight">Bus Dev</h1>
             <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">{user?.role === "Sales" ? "AM" : user?.role}</p>
           </div>
         </div>

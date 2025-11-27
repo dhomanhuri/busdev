@@ -57,10 +57,10 @@ export default function LoginPage() {
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-50">
-                Project Portfolio Center
+                Bus Dev
               </CardTitle>
               <CardDescription className="text-slate-600  dark:text-slate-300" style={{marginTop: '-10px'}}>
-                A Legacy of Delivered Projects
+                Business Development Management System
               </CardDescription>
             </CardHeader>
             <CardContent>

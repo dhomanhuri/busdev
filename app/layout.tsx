@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Pantau Penjualan - Sales Activity Monitoring',
-  description: 'Sistem monitoring aktivitas penjualan dengan role-based access control',
+  title: 'Bus Dev',
+  description: 'Business Development Management System',
   generator: 'v0.app',
 }
 
