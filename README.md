@@ -16,6 +16,7 @@ Minimal Next.js project dengan fitur Login dan User Management menggunakan Supab
 ## Tech Stack
 
 
+
 - **Framework**: Next.js 16
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
