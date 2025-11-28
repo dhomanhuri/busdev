@@ -1,4 +1,4 @@
-# Base Project - Login & User Management
+# Base Project - Login & User Management.
 
 Minimal Next.js project dengan fitur Login dan User Management menggunakan Supabase.
 
