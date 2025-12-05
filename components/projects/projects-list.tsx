@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProjectDialog } from "./project-dialog";
 import { ProjectDetailDialog } from "./project-detail-dialog";
 import { ListControls } from "@/components/ui/list-controls";
-import { Plus, Trash2, Edit, Eye, Calendar, FolderKanban } from 'lucide-react';
+import { Plus, Trash2, Edit, Eye, FolderKanban } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -48,10 +48,10 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
           return (a.customer?.nama || "").localeCompare(b.customer?.nama || "");
         case "customer_desc":
           return (b.customer?.nama || "").localeCompare(a.customer?.nama || "");
-        case "tanggal_asc":
-          return new Date(a.tanggal || 0).getTime() - new Date(b.tanggal || 0).getTime();
-        case "tanggal_desc":
-          return new Date(b.tanggal || 0).getTime() - new Date(a.tanggal || 0).getTime();
+        case "nilai_asc":
+          return (a.nilai_project || 0) - (b.nilai_project || 0);
+        case "nilai_desc":
+          return (b.nilai_project || 0) - (a.nilai_project || 0);
         case "created_asc":
           return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
         case "created_desc":
@@ -110,8 +110,8 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
               { value: "pid_desc", label: "PID (Z-A)" },
               { value: "customer_asc", label: "Customer (A-Z)" },
               { value: "customer_desc", label: "Customer (Z-A)" },
-              { value: "tanggal_asc", label: "Date (Oldest)" },
-              { value: "tanggal_desc", label: "Date (Newest)" },
+              { value: "nilai_asc", label: "Nilai Project (Lowest)" },
+              { value: "nilai_desc", label: "Nilai Project (Highest)" },
               { value: "created_asc", label: "Created (Oldest)" },
               { value: "created_desc", label: "Created (Newest)" },
             ]}
@@ -175,7 +175,10 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                       Account Manager
                     </th>
                     <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Date
+                      Nilai Project
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
+                      Periode Project
                     </th>
                     <th className="text-center py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
                       Status
@@ -226,17 +229,43 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                          <span className="text-slate-600 dark:text-slate-400">
-                            {project.tanggal 
-                              ? new Date(project.tanggal).toLocaleDateString('en-US', { 
-                                  year: 'numeric', 
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })
-                              : "-"}
-                          </span>
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                          {project.nilai_project 
+                            ? new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                              }).format(project.nilai_project)
+                            : "-"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-1">
+                          {project.periode_mulai || project.periode_selesai ? (
+                            <>
+                              {project.periode_mulai && (
+                                <span className="text-slate-600 dark:text-slate-400 text-sm">
+                                  Mulai: {new Date(project.periode_mulai).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              )}
+                              {project.periode_selesai && (
+                                <span className="text-slate-600 dark:text-slate-400 text-sm">
+                                  Selesai: {new Date(project.periode_selesai).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500">-</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-6">

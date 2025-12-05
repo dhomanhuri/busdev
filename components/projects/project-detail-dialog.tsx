@@ -20,6 +20,8 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
+  DollarSign,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -89,15 +91,14 @@ export function ProjectDetailDialog({
                     </>
                   )}
                 </Badge>
-                {project.tanggal && (
+                {(project.periode_mulai || project.periode_selesai) && (
                   <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(project.tanggal).toLocaleDateString("id-ID", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    <Clock className="h-3 w-3" />
+                    {project.periode_mulai && project.periode_selesai
+                      ? `${new Date(project.periode_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(project.periode_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      : project.periode_mulai
+                      ? `Mulai: ${new Date(project.periode_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      : `Selesai: ${new Date(project.periode_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                   </span>
                 )}
               </div>
@@ -124,11 +125,38 @@ export function ProjectDetailDialog({
                   value={project.pid || "-"}
                 />
                 <InfoItem
-                  icon={Calendar}
-                  label="Date"
+                  icon={DollarSign}
+                  label="Nilai Project"
                   value={
-                    project.tanggal
-                      ? new Date(project.tanggal).toLocaleDateString("id-ID", {
+                    project.nilai_project
+                      ? new Intl.NumberFormat('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        }).format(project.nilai_project)
+                      : "-"
+                  }
+                />
+                <InfoItem
+                  icon={Clock}
+                  label="Tanggal Mulai"
+                  value={
+                    project.periode_mulai
+                      ? new Date(project.periode_mulai).toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "-"
+                  }
+                />
+                <InfoItem
+                  icon={Clock}
+                  label="Tanggal Selesai"
+                  value={
+                    project.periode_selesai
+                      ? new Date(project.periode_selesai).toLocaleDateString("id-ID", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",

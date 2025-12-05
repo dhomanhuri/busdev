@@ -27,7 +27,9 @@ export function ProjectDialog({
     customer_id: "",
     sales_id: "",
     distributor_id: "",
-    tanggal: "",
+    nilai_project: "",
+    periode_mulai: "",
+    periode_selesai: "",
     description: "",
     project_manager_id: "",
     status_aktif: true,
@@ -167,9 +169,12 @@ export function ProjectDialog({
           engineerIds = (engineersData || []).map((pe: any) => pe.user_id);
         }
 
-        // Format tanggal for input[type="date"]
-        const tanggalValue = project.tanggal 
-          ? new Date(project.tanggal).toISOString().split('T')[0]
+        // Format dates for input[type="date"]
+        const periodeMulaiValue = project.periode_mulai 
+          ? new Date(project.periode_mulai).toISOString().split('T')[0]
+          : "";
+        const periodeSelesaiValue = project.periode_selesai 
+          ? new Date(project.periode_selesai).toISOString().split('T')[0]
           : "";
 
         setFormData({
@@ -177,7 +182,9 @@ export function ProjectDialog({
           customer_id: project.customer_id || "",
           sales_id: project.sales_id || "",
           distributor_id: project.distributor_id || "",
-          tanggal: tanggalValue,
+          nilai_project: project.nilai_project?.toString() || "",
+          periode_mulai: periodeMulaiValue,
+          periode_selesai: periodeSelesaiValue,
           description: project.description || "",
           project_manager_id: project.project_manager_id || "",
           status_aktif: project.status_aktif ?? true,
@@ -191,7 +198,9 @@ export function ProjectDialog({
           customer_id: "",
           sales_id: "",
           distributor_id: "",
-          tanggal: "",
+          nilai_project: "",
+          periode_mulai: "",
+          periode_selesai: "",
           description: "",
           project_manager_id: "",
           status_aktif: true,
@@ -221,7 +230,9 @@ export function ProjectDialog({
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
             distributor_id: formData.distributor_id || null,
-            tanggal: formData.tanggal,
+            nilai_project: formData.nilai_project ? parseFloat(formData.nilai_project) : null,
+            periode_mulai: formData.periode_mulai || null,
+            periode_selesai: formData.periode_selesai || null,
             description: formData.description || null,
             project_manager_id: formData.project_manager_id || null,
             status_aktif: formData.status_aktif,
@@ -323,7 +334,9 @@ export function ProjectDialog({
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
             distributor_id: formData.distributor_id || null,
-            tanggal: formData.tanggal,
+            nilai_project: formData.nilai_project ? parseFloat(formData.nilai_project) : null,
+            periode_mulai: formData.periode_mulai || null,
+            periode_selesai: formData.periode_selesai || null,
             description: formData.description || null,
             project_manager_id: formData.project_manager_id || null,
             status_aktif: formData.status_aktif,
@@ -433,15 +446,42 @@ export function ProjectDialog({
             </div>
 
             <div>
-              <Label className="text-slate-700 dark:text-slate-300">Date *</Label>
+              <Label className="text-slate-700 dark:text-slate-300">Nilai Project</Label>
               <Input
-                type="date"
-                value={formData.tanggal}
+                type="number"
+                step="0.01"
+                value={formData.nilai_project}
                 onChange={(e) =>
-                  setFormData({ ...formData, tanggal: e.target.value })
+                  setFormData({ ...formData, nilai_project: e.target.value })
                 }
                 className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
-                required
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Tanggal Mulai</Label>
+              <Input
+                type="date"
+                value={formData.periode_mulai}
+                onChange={(e) =>
+                  setFormData({ ...formData, periode_mulai: e.target.value })
+                }
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+              />
+            </div>
+
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">Tanggal Selesai</Label>
+              <Input
+                type="date"
+                value={formData.periode_selesai}
+                onChange={(e) =>
+                  setFormData({ ...formData, periode_selesai: e.target.value })
+                }
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
               />
             </div>
           </div>
