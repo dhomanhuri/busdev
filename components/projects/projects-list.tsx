@@ -3,14 +3,20 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { ProjectDialog } from "./project-dialog";
 import { ProjectDetailDialog } from "./project-detail-dialog";
 import { ListControls } from "@/components/ui/list-controls";
-import { Plus, Trash2, Edit, Eye, FolderKanban } from 'lucide-react';
+import { Plus, Trash2, Edit, Eye, FolderKanban, Calendar, MoreVertical } from 'lucide-react';
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = useState(initialProjects);
@@ -29,16 +35,16 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
         project.customer?.nama?.toLowerCase().includes(search.toLowerCase()) ||
         project.sales?.nama_lengkap?.toLowerCase().includes(search.toLowerCase()) ||
         (project.distributor?.name?.toLowerCase().includes(search.toLowerCase()) || false);
-      
-      const matchesStatus = !statusFilter || 
+
+      const matchesStatus = !statusFilter ||
         (statusFilter === "active" && project.status_aktif) ||
         (statusFilter === "inactive" && !project.status_aktif);
-      
+
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       if (!sortBy) return 0;
-      
+
       switch (sortBy) {
         case "pid_asc":
           return (a.pid || "").localeCompare(b.pid || "");
@@ -89,18 +95,18 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-4 items-start">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col xl:flex-row gap-4 xl:items-center justify-between">
         <div className="flex-1">
           <ListControls
             search={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Search project by PID, customer, AM, or distributor..."
+            searchPlaceholder="Search project by PID, customer..."
             filterValue={statusFilter}
             onFilterChange={setStatusFilter}
             filterOptions={[
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
+              { value: "active", label: "Active Projects" },
+              { value: "inactive", label: "Inactive Projects" },
             ]}
             filterLabel="Status"
             sortValue={sortBy}
@@ -109,11 +115,8 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
               { value: "pid_asc", label: "PID (A-Z)" },
               { value: "pid_desc", label: "PID (Z-A)" },
               { value: "customer_asc", label: "Customer (A-Z)" },
-              { value: "customer_desc", label: "Customer (Z-A)" },
-              { value: "nilai_asc", label: "Nilai Project (Lowest)" },
-              { value: "nilai_desc", label: "Nilai Project (Highest)" },
-              { value: "created_asc", label: "Created (Oldest)" },
-              { value: "created_desc", label: "Created (Newest)" },
+              { value: "nilai_desc", label: "Revenue (High-Low)" },
+              { value: "created_desc", label: "Newest First" },
             ]}
           />
         </div>
@@ -122,10 +125,10 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
             setEditingProject(null);
             setShowDialog(true);
           }}
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
+          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/20 rounded-xl px-6 h-10 transition-all hover:scale-105"
         >
-          <Plus className="h-4 w-4" />
-          Add Project
+          <Plus className="h-4 w-4 mr-2" />
+          New Project
         </Button>
       </div>
 
@@ -150,173 +153,150 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
         />
       )}
 
-      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+      <Card className="border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl ring-1 ring-slate-200/50 dark:ring-slate-800/50 rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           {filteredAndSortedProjects.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 mb-4">
-                <FolderKanban className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="w-20 h-20 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center mb-4 animate-pulse">
+                <FolderKanban className="h-10 w-10 text-orange-400 dark:text-orange-500" />
               </div>
-              <p className="text-slate-600 dark:text-slate-400 font-medium">No projects found</p>
-              <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Try adjusting your search or filters</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">No projects found</h3>
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm mt-2">
+                We couldn't find any projects matching your search. Try adjusting options or create a new one.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-6 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("");
+                  setSortBy("");
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto relative">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border-b-2 border-orange-200 dark:border-orange-800/50">
-                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      PID
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Account Manager
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Nilai Project
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Periode Project
-                    </th>
-                    <th className="text-center py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="text-center py-4 px-6 text-sm font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                      Actions
-                    </th>
+                  <tr className="border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50">
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Project ID</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Customer</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Account Manager</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider text-right">Revenue</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider text-center">Period</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider text-center">Status</th>
+                    <th className="py-4 px-6 text-xs font-extra-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {filteredAndSortedProjects.map((project, index) => (
                     <tr
                       key={project.id}
-                      className="group bg-white dark:bg-slate-800 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-orange-50/30 dark:hover:from-orange-900/10 dark:hover:to-orange-800/5 transition-all duration-200 cursor-pointer"
-                      onClick={() => {
-                        setViewingProject(project);
-                        setShowDetailDialog(true);
-                      }}
+                      className={cn(
+                        "group transition-all duration-200 hover:bg-orange-50/30 dark:hover:bg-orange-950/10",
+                        index % 2 === 0 ? "bg-white dark:bg-slate-900/80" : "bg-slate-50/30 dark:bg-slate-900/40"
+                      )}
                     >
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-shrink-0 w-2 h-2 rounded-full bg-orange-400 dark:bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <span className="font-semibold text-slate-900 dark:text-slate-50">
-                            {project.pid || (
-                              <span className="text-slate-400 dark:text-slate-500 italic">No PID</span>
-                            )}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-2 rounded-full bg-orange-500/20 group-hover:bg-orange-500 transition-colors" />
+                          <div>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              {project.pid || "No PID"}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            {project.customer?.nama?.charAt(0)?.toUpperCase() || '?'}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200/50 dark:border-blue-800/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shadow-sm">
+                            {project.customer?.nama?.charAt(0)?.toUpperCase()}
                           </div>
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
+                          <span className="font-medium text-slate-800 dark:text-slate-300">
                             {project.customer?.nama || "-"}
                           </span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            {project.sales?.nama_lengkap?.charAt(0)?.toUpperCase() || '?'}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-bold">
+                            {project.sales?.nama_lengkap?.charAt(0)?.toUpperCase()}
                           </div>
-                          <span className="text-slate-600 dark:text-slate-400">
+                          <span className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                             {project.sales?.nama_lengkap || "-"}
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">
-                          {project.nilai_project 
+                      <td className="py-4 px-6 text-right">
+                        <span className="font-mono font-medium text-slate-700 dark:text-slate-300 text-sm bg-slate-100 dark:bg-slate-800/50 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-800">
+                          {project.nilai_project
                             ? new Intl.NumberFormat('id-ID', {
-                                style: 'currency',
-                                currency: 'IDR',
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                              }).format(project.nilai_project)
+                              style: 'currency',
+                              currency: 'IDR',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0
+                            }).format(project.nilai_project)
                             : "-"}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex flex-col gap-1">
-                          {project.periode_mulai || project.periode_selesai ? (
-                            <>
-                              {project.periode_mulai && (
-                                <span className="text-slate-600 dark:text-slate-400 text-sm">
-                                  Mulai: {new Date(project.periode_mulai).toLocaleDateString('id-ID', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </span>
-                              )}
-                              {project.periode_selesai && (
-                                <span className="text-slate-600 dark:text-slate-400 text-sm">
-                                  Selesai: {new Date(project.periode_selesai).toLocaleDateString('id-ID', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-slate-400 dark:text-slate-500">-</span>
+                        <div className="flex flex-col items-center gap-1">
+                          {project.periode_mulai && (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-2 py-1 rounded-full">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(project.periode_mulai).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })}
+                              <span className="text-orange-400 mx-1">→</span>
+                              {project.periode_selesai ? new Date(project.periode_selesai).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }) : "?"}
+                            </div>
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex justify-center">
-                          <Badge
-                            className={cn(
-                              "px-3 py-1 font-semibold shadow-sm",
-                              project.status_aktif
-                                ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-0"
-                                : "bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0"
-                            )}
-                          >
-                            {project.status_aktif ? "Active" : "Inactive"}
-                          </Badge>
-                        </div>
+                      <td className="py-4 px-6 text-center">
+                        <span
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm",
+                            project.status_aktif
+                              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30"
+                              : "bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/30"
+                          )}
+                        >
+                          {project.status_aktif ? "Active" : "Inactive"}
+                        </span>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setViewingProject(project);
-                              setShowDetailDialog(true);
-                            }}
-                            className="h-8 w-8 p-0 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 hover:from-green-200 hover:to-green-100 dark:hover:from-green-800/40 dark:hover:to-green-700/30 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 border border-green-200 dark:border-green-800/50 shadow-sm hover:shadow-md transition-all"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingProject(project);
-                              setShowDialog(true);
-                            }}
-                            className="h-8 w-8 p-0 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 hover:from-blue-200 hover:to-blue-100 dark:hover:from-blue-800/40 dark:hover:to-blue-700/30 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-all"
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteProject(project.id)}
-                            className="h-8 w-8 p-0 bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/20 hover:from-red-200 hover:to-red-100 dark:hover:from-red-800/40 dark:hover:to-red-700/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border border-red-200 dark:border-red-800/50 shadow-sm hover:shadow-md transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex items-center justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-orange-500">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                setViewingProject(project);
+                                setShowDetailDialog(true);
+                              }}>
+                                <Eye className="mr-2 h-4 w-4 text-emerald-500" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setEditingProject(project);
+                                setShowDialog(true);
+                              }}>
+                                <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                                Edit Project
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20" onClick={() => handleDeleteProject(project.id)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -327,6 +307,11 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
           )}
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 px-2">
+        <span>Showing {filteredAndSortedProjects.length} of {projects.length} projects</span>
+        <span>Last updated: just now</span>
+      </div>
     </div>
   );
 }

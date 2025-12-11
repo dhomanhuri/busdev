@@ -6,7 +6,7 @@ export default async function ProjectsPage() {
   const supabase = await createClient();
 
   const { data: { user }, error } = await supabase.auth.getUser();
-  
+
   if (error || !user) {
     redirect("/auth/login");
   }
@@ -42,9 +42,9 @@ export default async function ProjectsPage() {
 
   return (
     <div className="p-8 min-h-screen space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Project Management</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">Manage projects</p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Project Management</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-base font-medium">Manage your ongoing projects and track progress</p>
       </div>
 
       <ProjectsList initialProjects={projects || []} />

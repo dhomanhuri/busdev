@@ -97,8 +97,8 @@ export function ProjectDetailDialog({
                     {project.periode_mulai && project.periode_selesai
                       ? `${new Date(project.periode_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} - ${new Date(project.periode_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
                       : project.periode_mulai
-                      ? `Mulai: ${new Date(project.periode_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                      : `Selesai: ${new Date(project.periode_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                        ? `Mulai: ${new Date(project.periode_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                        : `Selesai: ${new Date(project.periode_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                   </span>
                 )}
               </div>
@@ -126,15 +126,15 @@ export function ProjectDetailDialog({
                 />
                 <InfoItem
                   icon={DollarSign}
-                  label="Nilai Project"
+                  label="Revenue"
                   value={
                     project.nilai_project
                       ? new Intl.NumberFormat('id-ID', {
-                          style: 'currency',
-                          currency: 'IDR',
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
-                        }).format(project.nilai_project)
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(project.nilai_project)
                       : "-"
                   }
                 />
@@ -144,10 +144,10 @@ export function ProjectDetailDialog({
                   value={
                     project.periode_mulai
                       ? new Date(project.periode_mulai).toLocaleDateString("id-ID", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
                       : "-"
                   }
                 />
@@ -157,10 +157,10 @@ export function ProjectDetailDialog({
                   value={
                     project.periode_selesai
                       ? new Date(project.periode_selesai).toLocaleDateString("id-ID", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
                       : "-"
                   }
                 />

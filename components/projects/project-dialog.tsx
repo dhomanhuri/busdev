@@ -170,10 +170,10 @@ export function ProjectDialog({
         }
 
         // Format dates for input[type="date"]
-        const periodeMulaiValue = project.periode_mulai 
+        const periodeMulaiValue = project.periode_mulai
           ? new Date(project.periode_mulai).toISOString().split('T')[0]
           : "";
-        const periodeSelesaiValue = project.periode_selesai 
+        const periodeSelesaiValue = project.periode_selesai
           ? new Date(project.periode_selesai).toISOString().split('T')[0]
           : "";
 
@@ -446,7 +446,7 @@ export function ProjectDialog({
             </div>
 
             <div>
-              <Label className="text-slate-700 dark:text-slate-300">Nilai Project</Label>
+              <Label className="text-slate-700 dark:text-slate-300">Revenue</Label>
               <Input
                 type="number"
                 step="0.01"

@@ -1,23 +1,35 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
-import { Bell, Search, LogOut, Settings, User, Menu, X, ChevronRight, Home, Clock } from 'lucide-react';
+import { useState } from "react";
+import { Bell, Search, LogOut, Settings, Clock, ChevronRight, Home, Menu, X } from 'lucide-react';
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const getBreadcrumbs = (pathname: string) => {
   const paths = pathname.split('/').filter(Boolean);
-  const breadcrumbs = [{ label: 'Home', href: '/dashboard', icon: Home }];
-  
-  // If we're already at dashboard, just return Home
+  const breadcrumbs: { label: string; href: string; icon?: any }[] = [{ label: 'Home', href: '/dashboard', icon: Home }];
+
   if (pathname === '/dashboard') {
     return breadcrumbs;
   }
-  
+
   const pathMap: Record<string, string> = {
     'projects': 'Projects',
     'customers': 'Customers',
@@ -35,14 +47,13 @@ const getBreadcrumbs = (pathname: string) => {
 
   let currentPath = '';
   paths.forEach((path, index) => {
-    // Skip 'dashboard' in path since we already have Home
     if (path === 'dashboard') {
       return;
     }
-    
+
     currentPath += `/${path}`;
     const label = pathMap[path] || path.charAt(0).toUpperCase() + path.slice(1);
-    breadcrumbs.push({ label, href: currentPath, icon: null });
+    breadcrumbs.push({ label, href: currentPath, icon: undefined });
   });
 
   return breadcrumbs;
@@ -50,11 +61,7 @@ const getBreadcrumbs = (pathname: string) => {
 
 export function TopNav({ user }: { user: any }) {
   const pathname = usePathname();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const avatarUrl = user?.avatar_url;
   const breadcrumbs = getBreadcrumbs(pathname);
@@ -66,69 +73,49 @@ export function TopNav({ user }: { user: any }) {
     router.refresh();
   };
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setIsNotificationOpen(false);
-      }
-    };
-
-    if (isDropdownOpen || isNotificationOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen, isNotificationOpen]);
-
-  const currentTime = new Date().toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
+  const currentTime = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: true 
+    hour12: true
   });
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-r from-orange-50/80 via-white to-orange-50/80 dark:from-slate-900/95 dark:via-slate-800/95 dark:to-slate-900/95 backdrop-blur-xl border-b border-orange-200/50 dark:border-orange-900/30 shadow-lg shadow-orange-500/5">
-      <div className="px-4 lg:px-6 py-2.5">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
+      <div className="px-4 lg:px-6 py-3">
         {/* Top Row - Breadcrumbs and Actions */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between">
           {/* Breadcrumbs */}
-          <nav className="flex items-center space-x-1.5 text-xs lg:text-sm">
+          <nav className="flex items-center space-x-1.5 text-xs lg:text-sm overflow-x-auto no-scrollbar mask-gradient-r">
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               const Icon = crumb.icon;
-              
+
               return (
-                <div key={`${crumb.href}-${index}`} className="flex items-center space-x-1.5">
+                <div key={`${crumb.href}-${index}`} className="flex items-center space-x-1.5 flex-shrink-0">
                   {Icon && (
                     <Link
                       href={crumb.href}
-                      className="flex items-center p-1 rounded-md bg-gradient-to-br from-orange-400/20 to-orange-500/10 dark:from-orange-600/20 dark:to-orange-700/10 text-orange-600 dark:text-orange-400 hover:from-orange-400/30 hover:to-orange-500/20 dark:hover:from-orange-600/30 dark:hover:to-orange-700/20 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105"
+                      className="flex items-center p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-200"
                     >
-                      <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                      <Icon className="h-4 w-4" />
                     </Link>
                   )}
                   {!Icon && index > 0 && (
-                    <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 text-orange-400 dark:text-orange-500" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-600" />
                   )}
                   <Link
                     href={crumb.href}
                     className={cn(
-                      "font-medium transition-all duration-200 px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-md",
+                      "font-medium transition-all duration-200 px-2 py-1 rounded-lg",
                       isLast
-                        ? "text-orange-700 dark:text-orange-300 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-900/30 dark:to-orange-800/20 shadow-sm font-semibold"
-                        : "text-slate-600 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-900/10"
+                        ? "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/20 shadow-sm"
+                        : "text-slate-700 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                     )}
                   >
                     {crumb.label}
@@ -139,168 +126,151 @@ export function TopNav({ user }: { user: any }) {
           </nav>
 
           {/* Right Side - Time, Notifications, User */}
-          <div className="flex items-center gap-2 lg:gap-3">
+          <div className="flex items-center gap-2 lg:gap-4 ml-4">
             {/* Time & Date */}
-            <div className="hidden md:flex flex-col items-end text-[10px] lg:text-xs bg-gradient-to-br from-orange-100/50 to-orange-50/50 dark:from-orange-900/20 dark:to-orange-800/10 px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg border border-orange-200/50 dark:border-orange-800/30 shadow-sm">
-              <div className="flex items-center gap-1 text-orange-700 dark:text-orange-300">
-                <Clock className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
-                <span className="font-semibold">{currentTime}</span>
-              </div>
-              <span className="text-orange-600 dark:text-orange-400 font-medium">{currentDate.split(',')[0]}</span>
+            <div className="hidden xl:flex flex-col items-end text-xs mx-2">
+              <span className="font-bold text-slate-700 dark:text-slate-200 font-mono tracking-tight">{currentTime}</span>
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">{currentDate.split(',')[0]}</span>
             </div>
 
+            {/* Separator */}
+            <div className="hidden xl:block h-8 w-px bg-slate-200 dark:bg-slate-800" />
+
             {/* Search Bar */}
-            <div className="hidden lg:flex relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-orange-500/10 rounded-lg blur-sm opacity-50"></div>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-orange-500 dark:text-orange-400 z-10" />
+            <div className="hidden lg:flex relative group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-orange-500 transition-colors z-10" />
               <input
                 type="text"
-                placeholder="Quick search..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="relative pl-9 pr-3 py-1.5 w-56 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-2 border-orange-200 dark:border-orange-800/50 rounded-lg text-xs lg:text-sm text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-orange-400 dark:focus:ring-orange-600/50 dark:focus:border-orange-600 transition-all shadow-sm hover:shadow-md"
+                className="pl-9 pr-4 py-2 w-48 focus:w-64 bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-orange-300 dark:focus:border-orange-700 rounded-xl text-sm text-slate-900 dark:text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-900/20 transition-all duration-300"
               />
             </div>
 
             {/* Notifications */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="relative p-1.5 lg:p-2 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900/30 dark:to-orange-800/20 hover:from-orange-200 hover:to-orange-100 dark:hover:from-orange-800/40 dark:hover:to-orange-700/30 border border-orange-200/50 dark:border-orange-800/50 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105"
-              >
-                <Bell className="h-4 w-4 lg:h-5 lg:w-5" />
-                <span className="absolute top-0.5 right-0.5 lg:top-1 lg:right-1 h-2 w-2 lg:h-2.5 lg:w-2.5 bg-gradient-to-br from-red-500 to-red-600 rounded-full border-2 border-white dark:border-slate-900 shadow-sm animate-pulse"></span>
-              </button>
-
-              {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-2 border-orange-200/50 dark:border-orange-800/50 shadow-2xl shadow-orange-500/10 z-50 overflow-hidden">
-                  <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/30 dark:to-orange-800/20 border-b border-orange-200/50 dark:border-orange-800/50">
-                    <h3 className="font-bold text-orange-700 dark:text-orange-300 flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      Notifications
-                    </h3>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-sm text-center text-slate-500 dark:text-slate-400 py-8">
-                      No new notifications
-                    </p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 shadow-sm animate-pulse"></span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 mr-4 mt-2 border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-50">Notifications</h3>
+                    <span className="text-xs text-orange-600 dark:text-orange-400 font-medium bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">New</span>
                   </div>
                 </div>
-              )}
-            </div>
+                <div className="p-8 text-center">
+                  <div className="mx-auto h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-3">
+                    <Bell className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    No new notifications
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* User Profile Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 lg:gap-2.5 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-lg bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/30 dark:to-orange-800/20 hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-800/40 dark:hover:to-orange-700/30 border border-orange-200/50 dark:border-orange-800/50 transition-all duration-200 group shadow-sm hover:shadow-md hover:scale-105"
-              >
-                {avatarUrl ? (
-                  <div className="h-7 w-7 lg:h-8 lg:w-8 rounded-full overflow-hidden border-2 border-orange-300 dark:border-orange-700 shadow-md ring-2 ring-orange-200/50 dark:ring-orange-900/50 group-hover:ring-orange-400 dark:group-hover:ring-orange-700 transition-all">
-                    <Image
-                      src={avatarUrl}
-                      alt={user?.nama_lengkap || "User avatar"}
-                      width={32}
-                      height={32}
-                      className="object-cover h-full w-full"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-7 w-7 lg:h-8 lg:w-8 rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center shadow-md ring-2 ring-orange-200/50 dark:ring-orange-900/50 group-hover:ring-orange-400 dark:group-hover:ring-orange-700 transition-all">
-                    <span className="text-white font-bold text-xs lg:text-sm">
-                      {user?.nama_lengkap?.charAt(0)?.toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                )}
-                <div className="hidden lg:block text-left">
-                  <p className="text-xs lg:text-sm font-bold text-orange-700 dark:text-orange-300 leading-tight">
-                    {user?.nama_lengkap || "User"}
-                  </p>
-                  <p className="text-[10px] lg:text-xs text-orange-600 dark:text-orange-400 font-medium leading-tight">
-                    {user?.role === "Sales" ? "Account Manager" : user?.role || "User"}
-                  </p>
-                </div>
-              </button>
-
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-2 border-orange-200/50 dark:border-orange-800/50 shadow-2xl shadow-orange-500/10 z-50 overflow-hidden transform transition-all duration-200">
-                  {/* User Info Header */}
-                  <div className="p-4 bg-gradient-to-br from-orange-400/10 via-orange-300/10 to-orange-200/10 dark:from-orange-900/40 dark:via-orange-800/30 dark:to-orange-700/20 border-b border-orange-200/50 dark:border-orange-800/50">
-                    <div className="flex items-center gap-3">
-                      {avatarUrl ? (
-                        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-orange-300 dark:border-orange-700 shadow-lg ring-2 ring-orange-200/50 dark:ring-orange-900/50">
-                          <Image
-                            src={avatarUrl}
-                            alt={user?.nama_lengkap || "User avatar"}
-                            width={48}
-                            height={48}
-                            className="object-cover h-full w-full"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center shadow-lg ring-2 ring-orange-200/50 dark:ring-orange-900/50">
-                          <span className="text-white font-bold text-lg">
-                            {user?.nama_lengkap?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-orange-700 dark:text-orange-300 truncate">
-                          {user?.nama_lengkap || "User"}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                          {user?.email || ""}
-                        </p>
-                        <p className="text-xs text-orange-600 dark:text-orange-400 font-bold mt-0.5 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-md inline-block">
-                          {user?.role === "Sales" ? "Account Manager" : user?.role || "User"}
-                        </p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 group">
+                  <div className="relative">
+                    {avatarUrl ? (
+                      <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 group-hover:ring-orange-300 dark:group-hover:ring-orange-700 transition-all">
+                        <Image
+                          src={avatarUrl}
+                          alt={user?.nama_lengkap || "User avatar"}
+                          width={32}
+                          height={32}
+                          className="object-cover h-full w-full"
+                        />
                       </div>
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 group-hover:ring-orange-300 dark:group-hover:ring-orange-700 transition-all">
+                        <span className="text-white font-bold text-xs">
+                          {user?.nama_lengkap?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-900 shadow-sm" />
+                  </div>
+                  <div className="hidden md:block text-left mr-1">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                      {user?.nama_lengkap || "User"}
+                    </p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
+                      {user?.role === "Sales" ? "Account Manager" : user?.role || "User"}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 mt-2 p-1 border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+                <div className="p-3 mb-1 bg-slate-50 dark:bg-slate-800/50 rounded-md">
+                  <div className="flex items-center gap-3">
+                    {avatarUrl ? (
+                      <div className="h-10 w-10 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <Image
+                          src={avatarUrl}
+                          alt={user?.nama_lengkap || "User avatar"}
+                          width={40}
+                          height={40}
+                          className="object-cover h-full w-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">
+                          {user?.nama_lengkap?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate">
+                        {user?.nama_lengkap}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {user?.email}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Menu Items */}
-                  <div className="p-2 bg-gradient-to-b from-transparent to-orange-50/30 dark:to-orange-900/10">
-                    <Link
-                      href="/dashboard/profile"
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-orange-700 dark:text-orange-300 hover:bg-gradient-to-r hover:from-orange-100 hover:to-orange-50 dark:hover:from-orange-900/30 dark:hover:to-orange-800/20 hover:text-orange-700 dark:hover:text-orange-300 transition-all duration-200 group shadow-sm hover:shadow-md"
-                    >
-                      <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-200 to-orange-100 dark:from-orange-800/50 dark:to-orange-900/30 group-hover:from-orange-300 group-hover:to-orange-200 dark:group-hover:from-orange-700 dark:group-hover:to-orange-800 transition-all shadow-sm">
-                        <Settings className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      <span>Profile Settings</span>
-                    </Link>
-                    
-                    <button
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-100 hover:to-red-50 dark:hover:from-red-900/30 dark:hover:to-red-800/20 transition-all duration-200 group mt-1 shadow-sm hover:shadow-md"
-                    >
-                      <div className="p-1.5 rounded-lg bg-gradient-to-br from-red-200 to-red-100 dark:from-red-800/50 dark:to-red-900/30 group-hover:from-red-300 group-hover:to-red-200 dark:group-hover:from-red-700 dark:group-hover:to-red-800 transition-all shadow-sm">
-                        <LogOut className="h-4 w-4" />
-                      </div>
-                      <span>Logout</span>
-                    </button>
-                  </div>
                 </div>
-              )}
-            </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-slate-500 uppercase tracking-wider font-medium">Account</DropdownMenuLabel>
+                <DropdownMenuItem className="cursor-pointer gap-2 p-2 focus:bg-orange-50 dark:focus:bg-orange-950/20 focus:text-orange-700 dark:focus:text-orange-300" asChild>
+                  <Link href="/dashboard/profile">
+                    <Settings className="h-4 w-4" />
+                    <span>Profile Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2 p-2 text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20 focus:text-red-700 dark:focus:text-red-300"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="lg:hidden">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-orange-500/10 rounded-lg blur-sm opacity-50"></div>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-orange-500 dark:text-orange-400 z-10" />
+        <div className="lg:hidden mt-3">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-orange-500 z-10" />
             <input
               type="text"
-              placeholder="Quick search..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="relative w-full pl-9 pr-3 py-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-2 border-orange-200 dark:border-orange-800/50 rounded-lg text-xs lg:text-sm text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 focus:border-orange-400 dark:focus:ring-orange-600/50 dark:focus:border-orange-600 transition-all shadow-sm hover:shadow-md"
+              className="pl-9 pr-3 py-2 w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-orange-300 dark:focus:border-orange-700 rounded-xl text-sm text-slate-900 dark:text-slate-50 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-900/20 transition-all duration-300"
             />
           </div>
         </div>
@@ -308,3 +278,4 @@ export function TopNav({ user }: { user: any }) {
     </header>
   );
 }
+

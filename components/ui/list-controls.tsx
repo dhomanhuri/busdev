@@ -1,7 +1,15 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Filter, ArrowUpDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface FilterOption {
   value: string;
@@ -25,6 +33,7 @@ interface ListControlsProps {
   onSortChange?: (value: string) => void;
   sortOptions?: SortOption[];
   sortLabel?: string;
+  className?: string;
 }
 
 export function ListControls({
@@ -39,48 +48,59 @@ export function ListControls({
   onSortChange,
   sortOptions,
   sortLabel = "Sort By",
+  className,
 }: ListControlsProps) {
   return (
-    <div className="flex flex-wrap gap-4 items-center">
-      <div className="flex-1 min-w-[200px] relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-slate-400" />
+    <div className={cn("flex flex-col sm:flex-row gap-4 items-start sm:items-center p-1", className)}>
+      <div className="relative flex-1 w-full min-w-[200px] group">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
         <Input
           placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+          className="pl-9 h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-orange-300 dark:focus:border-orange-700 focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-900/20 rounded-xl transition-all shadow-sm hover:shadow-md"
         />
       </div>
 
-      {filterOptions && onFilterChange && (
-        <select
-          value={filterValue || ""}
-          onChange={(e) => onFilterChange(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 min-w-[150px]"
-        >
-          <option value="">All {filterLabel}</option>
-          {filterOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      )}
+      <div className="flex gap-3 w-full sm:w-auto">
+        {filterOptions && onFilterChange && (
+          <Select value={filterValue || "all"} onValueChange={(value) => onFilterChange(value === "all" ? "" : value)}>
+            <SelectTrigger className="h-10 min-w-[140px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-orange-100 dark:focus:ring-orange-900/20 rounded-xl shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                <Filter className="h-3.5 w-3.5" />
+                <SelectValue placeholder={filterLabel} />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All {filterLabel}</SelectItem>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-      {sortOptions && onSortChange && (
-        <select
-          value={sortValue || ""}
-          onChange={(e) => onSortChange(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 min-w-[150px]"
-        >
-          <option value="">{sortLabel}</option>
-          {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      )}
+        {sortOptions && onSortChange && (
+          <Select value={sortValue || "default"} onValueChange={(value) => onSortChange(value === "default" ? "" : value)}>
+            <SelectTrigger className="h-10 min-w-[160px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-orange-100 dark:focus:ring-orange-900/20 rounded-xl shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <SelectValue placeholder={sortLabel} />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">{sortLabel}</SelectItem>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
     </div>
   );
 }
