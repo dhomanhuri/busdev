@@ -11,7 +11,6 @@ Minimal Next.js project dengan fitur Login dan User Management menggunakan Supab
 - ✅ Dark mode support
 - ✅ Responsive design
 - ✅ Avatar upload (optional)
-- 
 
 
 ## Tech Stack
