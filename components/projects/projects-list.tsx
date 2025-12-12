@@ -69,13 +69,33 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
       return;
     }
 
+    console.log("handleProjectSaved called with:", updatedProject);
+    console.log("Is editing:", !!editingProject);
+
     if (editingProject) {
       // Update existing project
-      setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
+      setProjects(prevProjects => {
+        const updated = prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p);
+        console.log("Updated projects list:", updated);
+        return updated;
+      });
       setEditingProject(null);
     } else {
       // Add new project to the beginning of the list
-      setProjects((prevProjects) => [updatedProject, ...prevProjects]);
+      // Ensure we don't add duplicates
+      setProjects((prevProjects) => {
+        // Check if project already exists (shouldn't happen, but just in case)
+        const exists = prevProjects.some(p => p.id === updatedProject.id);
+        if (exists) {
+          console.log("Project already exists, updating instead");
+          // If exists, update it instead
+          return prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p);
+        }
+        // Add new project at the beginning
+        const newList = [updatedProject, ...prevProjects];
+        console.log("Added new project to list. New list length:", newList.length);
+        return newList;
+      });
     }
     setShowDialog(false);
   };

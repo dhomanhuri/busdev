@@ -414,13 +414,42 @@ export function ProjectDialog({
           .eq("id", data.id)
           .single();
 
-        if (reloadError) throw reloadError;
-        
-        if (!newProject) {
-          throw new Error("Failed to load created project");
+        if (reloadError) {
+          console.error("Error reloading project:", reloadError);
+          // Fallback: use the basic data from insert if reload fails
+          // This ensures the project still appears in the list
+          const fallbackProject = {
+            ...data,
+            customer: null,
+            sales: null,
+            project_manager: null,
+            distributor: null,
+            project_products: [],
+            project_presales: [],
+            project_engineers: []
+          };
+          console.log("Using fallback project data:", fallbackProject);
+          onSave(fallbackProject);
+        } else if (!newProject) {
+          console.error("No project data returned from reload");
+          // Fallback: use the basic data from insert
+          const fallbackProject = {
+            ...data,
+            customer: null,
+            sales: null,
+            project_manager: null,
+            distributor: null,
+            project_products: [],
+            project_presales: [],
+            project_engineers: []
+          };
+          console.log("Using fallback project data:", fallbackProject);
+          onSave(fallbackProject);
+        } else {
+          console.log("Project created successfully:", newProject);
+          onSave(newProject);
         }
         
-        onSave(newProject);
         onClose();
       }
     } catch (err: any) {

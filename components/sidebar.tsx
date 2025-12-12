@@ -185,7 +185,7 @@ export function Sidebar({ user }: { user: any }) {
                   Bus Dev
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate flex items-center gap-1.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
                   {user?.role === "Sales" ? "Account Manager" : user?.role || "User"}
                 </p>
               </div>
