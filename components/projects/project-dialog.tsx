@@ -32,7 +32,6 @@ export function ProjectDialog({
     periode_selesai: "",
     description: "",
     project_manager_id: "",
-    status_aktif: true,
     product_ids: [] as string[],
     presales_ids: [] as string[],
     engineer_ids: [] as string[],
@@ -187,7 +186,6 @@ export function ProjectDialog({
           periode_selesai: periodeSelesaiValue,
           description: project.description || "",
           project_manager_id: project.project_manager_id || "",
-          status_aktif: project.status_aktif ?? true,
           product_ids: productIds,
           presales_ids: presalesIds,
           engineer_ids: engineerIds,
@@ -203,7 +201,6 @@ export function ProjectDialog({
           periode_selesai: "",
           description: "",
           project_manager_id: "",
-          status_aktif: true,
           product_ids: [],
           presales_ids: [],
           engineer_ids: [],
@@ -235,7 +232,6 @@ export function ProjectDialog({
             periode_selesai: formData.periode_selesai || null,
             description: formData.description || null,
             project_manager_id: formData.project_manager_id || null,
-            status_aktif: formData.status_aktif,
             updated_at: new Date().toISOString(),
           })
           .eq("id", project.id)
@@ -324,7 +320,13 @@ export function ProjectDialog({
           .single();
 
         if (reloadError) throw reloadError;
+        
+        if (!updatedProject) {
+          throw new Error("Failed to load updated project");
+        }
+        
         onSave(updatedProject);
+        onClose();
       } else {
         // Create new project
         const { data, error: createError } = await supabase
@@ -339,7 +341,6 @@ export function ProjectDialog({
             periode_selesai: formData.periode_selesai || null,
             description: formData.description || null,
             project_manager_id: formData.project_manager_id || null,
-            status_aktif: formData.status_aktif,
           })
           .select()
           .single();
@@ -414,10 +415,17 @@ export function ProjectDialog({
           .single();
 
         if (reloadError) throw reloadError;
+        
+        if (!newProject) {
+          throw new Error("Failed to load created project");
+        }
+        
         onSave(newProject);
+        onClose();
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
+      console.error("Error saving project:", err);
     } finally {
       setIsLoading(false);
     }
@@ -647,20 +655,6 @@ export function ProjectDialog({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="status_aktif"
-              checked={formData.status_aktif}
-              onChange={(e) =>
-                setFormData({ ...formData, status_aktif: e.target.checked })
-              }
-              className="rounded"
-            />
-            <Label htmlFor="status_aktif" className="text-slate-700 dark:text-slate-300">
-              Active Status
-            </Label>
-          </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 

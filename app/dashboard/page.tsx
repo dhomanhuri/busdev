@@ -4,6 +4,7 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsTrendChart } from "@/components/dashboard/projects-chart";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { TopCustomers } from "@/components/dashboard/top-customers";
+import { LayoutDashboard } from "lucide-react";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -56,7 +57,6 @@ export default async function DashboardPage() {
 
   // Calculate statistics
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => p.status_aktif).length;
   const totalCustomers = customers.length;
   const totalProducts = products.length;
   const totalUsers = users.length;
@@ -70,15 +70,21 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 min-h-screen space-y-6">
-      <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-lg">📊</span>
+    <div className="p-6 md:p-8 min-h-screen space-y-8 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Header */}
+      <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl blur-lg opacity-30 animate-pulse" />
+            <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/25">
+              <LayoutDashboard className="h-8 w-8 text-white" />
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">Dashboard</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm md:text-base">
+          <div className="flex-1">
+            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-50 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
+              Dashboard
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-base font-medium">
               Welcome back, {userProfile.nama_lengkap}
             </p>
           </div>
@@ -86,12 +92,12 @@ export default async function DashboardPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Projects"
           value={userProfile.role === 'Admin' || userProfile.role === 'GM' ? totalProjects : filteredProjects.length}
           icon="projects"
-          description={userProfile.role === 'Admin' || userProfile.role === 'GM' ? `${activeProjects} active` : `${filteredProjects.filter(p => p.status_aktif).length} active`}
+          description="All projects"
         />
         <StatsCard
           title="Customers"
