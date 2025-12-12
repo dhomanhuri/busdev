@@ -1,9 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from 'next/navigation';
-import { StatsCard } from "@/components/dashboard/stats-card";
-import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsByAMRevenueChart, ProjectsTrendChart } from "@/components/dashboard/projects-chart";
-import { RecentProjects } from "@/components/dashboard/recent-projects";
-import { TopCustomers } from "@/components/dashboard/top-customers";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { LayoutDashboard } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -91,49 +88,16 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Projects"
-          value={userProfile.role === 'Admin' || userProfile.role === 'GM' ? totalProjects : filteredProjects.length}
-          icon="projects"
-          description="All projects"
-        />
-        <StatsCard
-          title="Customers"
-          value={totalCustomers}
-          icon="customers"
-          description="Active customers"
-        />
-        <StatsCard
-          title="Products"
-          value={totalProducts}
-          icon="products"
-          description="Active products"
-        />
-        <StatsCard
-          title="Users"
-          value={totalUsers}
-          icon="users"
-          description="Active users"
-        />
-      </div>
-
-      {/* Charts and Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProjectsByStatusChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
-        <ProjectsByAMChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProjectsByAMRevenueChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
-        <ProjectsTrendChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentProjects projects={filteredProjects} />
-        <TopCustomers projects={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
-      </div>
+      {/* Dashboard Content with Drag and Drop */}
+      <DashboardContent
+        userProfile={userProfile}
+        projects={projects}
+        filteredProjects={filteredProjects}
+        totalProjects={totalProjects}
+        totalCustomers={totalCustomers}
+        totalProducts={totalProducts}
+        totalUsers={totalUsers}
+      />
     </div>
   );
 }

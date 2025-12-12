@@ -53,6 +53,77 @@ export function ProjectsByStatusChart({ data }: ProjectsChartProps) {
   );
 }
 
+export function TopCustomersByRevenueChart({ data }: ProjectsChartProps) {
+  // Group revenue by customer
+  const customerRevenue: Record<string, number> = {};
+  data.forEach(project => {
+    const customerName = project.customer?.nama || 'No Customer';
+    const revenue = project.nilai_project || 0;
+    customerRevenue[customerName] = (customerRevenue[customerName] || 0) + revenue;
+  });
+
+  const chartData = Object.entries(customerRevenue)
+    .map(([name, value]) => ({ 
+      name, 
+      value: value / 1000000, // Convert to millions for better readability
+      valueFormatted: value 
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5); // Top 5 customers
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+      notation: 'compact',
+    }).format(value);
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg">
+          <p className="font-semibold text-slate-900 dark:text-slate-50 mb-1">{payload[0].payload.name}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Revenue: <span className="font-bold text-purple-600 dark:text-purple-400">{formatCurrency(payload[0].payload.valueFormatted)}</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="pb-4 border-b border-slate-200/60 dark:border-slate-800/60">
+        <CardTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-50">Top Customers by Revenue</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.3)" />
+            <XAxis 
+              type="number" 
+              tick={{ fill: 'rgb(71, 85, 105)' }}
+              tickFormatter={(value) => `${value}M`}
+            />
+            <YAxis 
+              type="category" 
+              dataKey="name" 
+              tick={{ fill: 'rgb(71, 85, 105)' }}
+              width={120}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="value" fill="#A855F7" radius={[0, 8, 8, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ProjectsByAMChart({ data }: ProjectsChartProps) {
   // Group projects by AM/Sales
   const amCounts: Record<string, number> = {};

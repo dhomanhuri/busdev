@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
   const [projects, setProjects] = useState(initialProjects);
@@ -254,53 +255,64 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                       </span>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="ghost" 
-                        className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[180px] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-xl backdrop-blur-sm bg-white/95 dark:bg-slate-900/95">
-                      <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingProject(project);
-                          setShowDetailDialog(true);
-                        }}
-                        className="cursor-pointer rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                      >
-                        <Eye className="mr-2 h-4 w-4 text-emerald-500" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingProject(project);
-                          setShowDialog(true);
-                        }}
-                        className="cursor-pointer rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20"
-                      >
-                        <Edit className="mr-2 h-4 w-4 text-blue-500" />
-                        Edit Project
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer rounded-lg" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProject(project.id);
-                        }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button 
+                                variant="outline" 
+                                className="h-9 w-9 p-0 rounded-lg bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
+                              >
+                                <MoreVertical className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[180px] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-xl backdrop-blur-sm bg-white/95 dark:bg-slate-900/95">
+                          <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingProject(project);
+                              setShowDetailDialog(true);
+                            }}
+                            className="cursor-pointer rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                          >
+                            <Eye className="mr-2 h-4 w-4 text-emerald-500" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProject(project);
+                              setShowDialog(true);
+                            }}
+                            className="cursor-pointer rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                          >
+                            <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                            Edit Project
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer rounded-lg" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProject(project.id);
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-none shadow-lg">
+                        <p className="font-semibold">Actions</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 {/* Customer */}
@@ -464,50 +476,64 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                       </td>
                       <td className="py-5 px-6 text-center">
                         <div className="flex items-center justify-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" className="h-9 w-9 p-0 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20 text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:scale-110">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[180px] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-xl backdrop-blur-sm bg-white/95 dark:bg-slate-900/95">
-                              <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setViewingProject(project);
-                                  setShowDetailDialog(true);
-                                }}
-                                className="cursor-pointer rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                              >
-                                <Eye className="mr-2 h-4 w-4 text-emerald-500" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingProject(project);
-                                  setShowDialog(true);
-                                }}
-                                className="cursor-pointer rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20"
-                              >
-                                <Edit className="mr-2 h-4 w-4 text-blue-500" />
-                                Edit Project
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer rounded-lg" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteProject(project.id);
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                      <Button 
+                                        variant="outline" 
+                                        className="h-10 w-10 p-0 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md"
+                                      >
+                                        <MoreVertical className="h-5 w-5" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-[180px] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-xl backdrop-blur-sm bg-white/95 dark:bg-slate-900/95">
+                                  <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setViewingProject(project);
+                                      setShowDetailDialog(true);
+                                    }}
+                                    className="cursor-pointer rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                                  >
+                                    <Eye className="mr-2 h-4 w-4 text-emerald-500" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingProject(project);
+                                      setShowDialog(true);
+                                    }}
+                                    className="cursor-pointer rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                                  >
+                                    <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                                    Edit Project
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer rounded-lg" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteProject(project.id);
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-none shadow-lg">
+                                <p className="font-semibold">Actions</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </td>
                     </tr>
