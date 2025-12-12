@@ -13,6 +13,7 @@ Minimal Next.js project dengan fitur Login dan User Management menggunakan Supab
 - ✅ Avatar upload (optional)
 - 
 
+
 ## Tech Stack
 
 
