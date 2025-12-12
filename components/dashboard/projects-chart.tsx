@@ -99,6 +99,77 @@ export function ProjectsByAMChart({ data }: ProjectsChartProps) {
   );
 }
 
+export function ProjectsByAMRevenueChart({ data }: ProjectsChartProps) {
+  // Group revenue by AM/Sales
+  const amRevenue: Record<string, number> = {};
+  data.forEach(project => {
+    const amName = project.sales?.nama_lengkap || 'Unassigned';
+    const revenue = project.nilai_project || 0;
+    amRevenue[amName] = (amRevenue[amName] || 0) + revenue;
+  });
+
+  const chartData = Object.entries(amRevenue)
+    .map(([name, value]) => ({ 
+      name, 
+      value: value / 1000000, // Convert to millions for better readability
+      valueFormatted: value 
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+      notation: 'compact',
+    }).format(value);
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg">
+          <p className="font-semibold text-slate-900 dark:text-slate-50 mb-1">{payload[0].payload.name}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Revenue: <span className="font-bold text-orange-600 dark:text-orange-400">{formatCurrency(payload[0].payload.valueFormatted)}</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="pb-4 border-b border-slate-200/60 dark:border-slate-800/60">
+        <CardTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-50">Revenue by AM</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.3)" />
+            <XAxis 
+              type="number" 
+              tick={{ fill: 'rgb(71, 85, 105)' }}
+              tickFormatter={(value) => `${value}M`}
+            />
+            <YAxis 
+              type="category" 
+              dataKey="name" 
+              tick={{ fill: 'rgb(71, 85, 105)' }}
+              width={120}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="value" fill="#4FD1C5" radius={[0, 8, 8, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ProjectsTrendChart({ data }: ProjectsChartProps) {
   // Group projects by month
   const monthlyCounts: Record<string, number> = {};

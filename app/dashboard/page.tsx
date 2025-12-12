@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from 'next/navigation';
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsTrendChart } from "@/components/dashboard/projects-chart";
+import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsByAMRevenueChart, ProjectsTrendChart } from "@/components/dashboard/projects-chart";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { TopCustomers } from "@/components/dashboard/top-customers";
 import { LayoutDashboard } from "lucide-react";
@@ -125,7 +125,10 @@ export default async function DashboardPage() {
         <ProjectsByAMChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
       </div>
 
-      <ProjectsTrendChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProjectsByAMRevenueChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+        <ProjectsTrendChart data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentProjects projects={filteredProjects} />
