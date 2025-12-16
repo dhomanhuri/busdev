@@ -97,7 +97,6 @@ export default async function ProjectsPage() {
               currency: 'IDR',
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
-              notation: 'compact',
             }).format(totalRevenue)}
           </p>
           <p className="relative text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -106,7 +105,6 @@ export default async function ProjectsPage() {
               currency: 'IDR',
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
-              notation: 'compact',
             }).format(avgProjectValue)}
           </p>
         </div>

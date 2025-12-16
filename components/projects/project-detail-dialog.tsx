@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -62,7 +63,7 @@ export function ProjectDetailDialog({
   );
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={!!project} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 text-slate-900 dark:text-slate-50 max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar scroll-smooth rounded-2xl shadow-2xl">
         <DialogHeader className="pb-6 border-b-2 border-slate-200/60 dark:border-slate-800/60">
           <div className="space-y-6">
@@ -107,7 +108,6 @@ export function ProjectDetailDialog({
                       currency: 'IDR',
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
-                      notation: 'compact',
                     }).format(project.nilai_project)
                     : "-"}
                 </p>
@@ -144,49 +144,47 @@ export function ProjectDetailDialog({
         </DialogHeader>
 
         <div className="space-y-6 pt-6">
-          {/* Overview Section - Customer & Team */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Customer Card */}
-            <Card className="bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-slate-900/80 backdrop-blur-sm border-blue-200/60 dark:border-blue-800/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
-                  <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-2 shadow-md">
-                    <Building2 className="h-5 w-5 text-white" />
+          {/* Customer Card */}
+          <Card className="bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-slate-900/80 backdrop-blur-sm border-blue-200/60 dark:border-blue-800/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
+                <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-2 shadow-md">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                Customer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-blue-500 rounded-2xl blur-lg opacity-20" />
+                    <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                      {project.customer?.nama?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
                   </div>
-                  Customer
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-blue-500 rounded-2xl blur-lg opacity-20" />
-                      <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                        {project.customer?.nama?.charAt(0)?.toUpperCase() || "?"}
+                  <div className="flex-1">
+                    <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 mb-1">
+                      {project.customer?.nama || "-"}
+                    </p>
+                    {project.distributor?.name && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Truck className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                          {project.distributor.name}
+                        </p>
                       </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 mb-1">
-                        {project.customer?.nama || "-"}
-                      </p>
-                      {project.distributor?.name && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <Truck className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                            {project.distributor.name}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Team Overview */}
-            <Card className="bg-gradient-to-br from-slate-50/50 to-white dark:from-slate-950/20 dark:to-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          {/* Team Overview */}
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
+                <CardTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
                   <div className="rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 p-2 shadow-md">
                     <Users className="h-5 w-5 text-white" />
                   </div>
@@ -194,37 +192,72 @@ export function ProjectDetailDialog({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-slate-500 rounded-full blur-lg opacity-20" />
-                      <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                        {project.sales?.nama_lengkap?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                        Account Manager
-                      </p>
-                      <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50">
-                        {project.sales?.nama_lengkap || "-"}
-                      </p>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Account Manager */}
+                  {project.sales?.nama_lengkap && (
+                    <InfoItem
+                      icon={UserCircle}
+                      label="Account Manager"
+                      value={project.sales.nama_lengkap}
+                    />
+                  )}
+
+                  {/* Project Manager */}
                   {project.project_manager?.nama_lengkap && (
-                    <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                        Project Manager
-                      </p>
-                      <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
-                        {project.project_manager.nama_lengkap}
-                      </p>
+                    <InfoItem
+                      icon={UserCircle}
+                      label="Project Manager"
+                      value={project.project_manager.nama_lengkap}
+                    />
+                  )}
+
+                  {/* Presales */}
+                  {project.project_presales && project.project_presales.length > 0 && (
+                    <>
+                      {project.project_presales.map((pp: any, index: number) => (
+                        <InfoItem
+                          key={pp.user?.id}
+                          icon={Users}
+                          label={index === 0 ? `Presales (${project.project_presales.length})` : "Presales"}
+                          value={pp.user?.nama_lengkap || "-"}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* Engineers */}
+                  {project.project_engineers && project.project_engineers.length > 0 && (
+                    <>
+                      {project.project_engineers.map((pe: any, index: number) => (
+                        <InfoItem
+                          key={pe.user?.id}
+                          icon={Code}
+                          label={index === 0 ? `Engineer (${project.project_engineers.length})` : "Engineer"}
+                          value={pe.user?.nama_lengkap || "-"}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* Empty State */}
+                  {!project.sales?.nama_lengkap && 
+                   !project.project_manager?.nama_lengkap && 
+                   (!project.project_presales || project.project_presales.length === 0) && 
+                   (!project.project_engineers || project.project_engineers.length === 0) && (
+                    <div className="col-span-2 text-center py-12 text-slate-500 dark:text-slate-400">
+                      <div className="relative w-16 h-16 mx-auto mb-4">
+                        <div className="absolute inset-0 bg-slate-50 dark:bg-slate-900/20 rounded-xl blur-lg opacity-50" />
+                        <div className="relative w-16 h-16 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/20 flex items-center justify-center border border-slate-200/50 dark:border-slate-800/30">
+                          <Users className="h-8 w-8 opacity-50" />
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No team members assigned</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Assign team members to this project</p>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
-          </div>
 
           {/* Basic Information */}
           <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -351,112 +384,6 @@ export function ProjectDetailDialog({
             </CardContent>
           </Card>
 
-          {/* Team Members */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Presales */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
-                  <div className="rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-2 shadow-md">
-                    <Users className="h-5 w-5 text-white" />
-                  </div>
-                  Presales Team
-                  {project.project_presales && project.project_presales.length > 0 && (
-                    <Badge className="ml-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-3 py-1 rounded-lg font-bold shadow-sm">
-                      {project.project_presales.length}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {project.project_presales && project.project_presales.length > 0 ? (
-                  <div className="space-y-3">
-                    {project.project_presales.map((pp: any) => (
-                      <div
-                        key={pp.user?.id}
-                        className="group p-4 rounded-xl bg-gradient-to-r from-purple-50/80 to-purple-100/50 dark:from-purple-900/30 dark:to-purple-800/20 backdrop-blur-sm border-2 border-purple-200/60 dark:border-purple-700/50 hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-purple-500 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-                            <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                              {pp.user?.nama_lengkap?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-                          </div>
-                          <p className="font-bold text-slate-900 dark:text-slate-50 text-base">
-                            {pp.user?.nama_lengkap || "-"}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                    <div className="relative w-16 h-16 mx-auto mb-4">
-                      <div className="absolute inset-0 bg-purple-50 dark:bg-purple-900/20 rounded-xl blur-lg opacity-50" />
-                      <div className="relative w-16 h-16 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20 flex items-center justify-center border border-purple-200/50 dark:border-purple-800/30">
-                        <Users className="h-8 w-8 opacity-50" />
-                      </div>
-                    </div>
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No presales assigned</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Assign presales team members</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Engineers */}
-            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-3">
-                  <div className="rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-2 shadow-md">
-                    <Code className="h-5 w-5 text-white" />
-                  </div>
-                  Engineering Team
-                  {project.project_engineers && project.project_engineers.length > 0 && (
-                    <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-sm">
-                      {project.project_engineers.length}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {project.project_engineers && project.project_engineers.length > 0 ? (
-                  <div className="space-y-3">
-                    {project.project_engineers.map((pe: any) => (
-                      <div
-                        key={pe.user?.id}
-                        className="group p-4 rounded-xl bg-gradient-to-r from-orange-50/80 to-orange-100/50 dark:from-orange-900/30 dark:to-orange-800/20 backdrop-blur-sm border-2 border-orange-200/60 dark:border-orange-700/50 hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-orange-500 rounded-full blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-                            <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                              {pe.user?.nama_lengkap?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-                          </div>
-                          <p className="font-bold text-slate-900 dark:text-slate-50 text-base">
-                            {pe.user?.nama_lengkap || "-"}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                    <div className="relative w-16 h-16 mx-auto mb-4">
-                      <div className="absolute inset-0 bg-orange-50 dark:bg-orange-900/20 rounded-xl blur-lg opacity-50" />
-                      <div className="relative w-16 h-16 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 flex items-center justify-center border border-orange-200/50 dark:border-orange-800/30">
-                        <Code className="h-8 w-8 opacity-50" />
-                      </div>
-                    </div>
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No engineers assigned</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Assign engineering team members</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

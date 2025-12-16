@@ -357,7 +357,6 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                         currency: 'IDR',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                        notation: 'compact',
                       }).format(project.nilai_project)}
                     </p>
                   </div>
@@ -457,7 +456,6 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                               currency: 'IDR',
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
-                              notation: 'compact',
                             }).format(project.nilai_project)
                             : "-"}
                         </span>
