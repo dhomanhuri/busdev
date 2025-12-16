@@ -167,14 +167,6 @@ export function ProjectDetailDialog({
                     <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 mb-1">
                       {project.customer?.nama || "-"}
                     </p>
-                    {project.distributor?.name && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <Truck className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                          {project.distributor.name}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -366,6 +358,19 @@ export function ProjectDetailDialog({
                           </Badge>
                         )}
                       </div>
+                      {pp.distributor?.name && (
+                        <div className="mt-3 pt-3 border-t border-blue-200/60 dark:border-blue-700/50">
+                          <div className="flex items-center gap-2">
+                            <Truck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                              Distributor:
+                            </p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-50">
+                              {pp.distributor.name}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -21,6 +21,7 @@ export default async function ProjectsPage() {
       project_manager:users!project_manager_id(*),
       distributor:distributors(*),
       project_products(
+        distributor_id,
         product:products(
           *,
           brand:brands(
@@ -30,7 +31,8 @@ export default async function ProjectsPage() {
               category:categories(*)
             )
           )
-        )
+        ),
+        distributor:distributors(*)
       ),
       project_presales(
         user:users(*)

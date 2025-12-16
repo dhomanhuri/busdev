@@ -24,6 +24,20 @@ export function UserDialog({
   onClose: () => void;
   onSave: (user: any) => void;
 }) {
+  const [open, setOpen] = useState(true);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    // Reset open state when user changes (dialog opens)
+    setOpen(true);
+  }, [user]);
+
   const [formData, setFormData] = useState({
     nama_lengkap: "",
     email: "",
@@ -278,7 +292,13 @@ export function UserDialog({
           if (ucError) throw ucError;
         }
 
-        onSave({ ...user, ...formData });
+        const updatedUser = { ...user, ...formData };
+        setOpen(false);
+        onClose();
+        // Use setTimeout to ensure dialog closes and unmounts before calling onSave
+        setTimeout(() => {
+          onSave(updatedUser);
+        }, 150);
       } else {
         // Create new user via auth
         const { data: signUpData, error: signUpError } =
@@ -353,11 +373,17 @@ export function UserDialog({
           }
         }
 
-        onSave({
+        const newUser = {
           id: signUpData.user?.id,
           ...formData,
           avatar_url: avatarUrl,
-        });
+        };
+        setOpen(false);
+        onClose();
+        // Use setTimeout to ensure dialog closes and unmounts before calling onSave
+        setTimeout(() => {
+          onSave(newUser);
+        }, 150);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -367,7 +393,7 @@ export function UserDialog({
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">{user ? "Edit User" : "Add New User"}</DialogTitle>

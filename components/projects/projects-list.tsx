@@ -34,8 +34,7 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
       const matchesSearch =
         (project.pid?.toLowerCase().includes(search.toLowerCase()) || false) ||
         project.customer?.nama?.toLowerCase().includes(search.toLowerCase()) ||
-        project.sales?.nama_lengkap?.toLowerCase().includes(search.toLowerCase()) ||
-        (project.distributor?.name?.toLowerCase().includes(search.toLowerCase()) || false);
+        project.sales?.nama_lengkap?.toLowerCase().includes(search.toLowerCase());
 
       return matchesSearch;
     })

@@ -22,17 +22,26 @@ export function ProjectDialog({
   onClose: () => void;
   onSave: (project: any) => void;
 }) {
+  const [open, setOpen] = useState(true);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      onClose();
+    }
+  };
+
   const [formData, setFormData] = useState({
     pid: "",
     customer_id: "",
     sales_id: "",
-    distributor_id: "",
     nilai_project: "",
     periode_mulai: "",
     periode_selesai: "",
     description: "",
     project_manager_id: "",
     product_ids: [] as string[],
+    product_distributors: {} as Record<string, string>, // product_id -> distributor_id
     presales_ids: [] as string[],
     engineer_ids: [] as string[],
   });
@@ -132,16 +141,30 @@ export function ProjectDialog({
         // Load junction table data
         const supabase = createClient();
 
+        let productDistributors: Record<string, string> = {};
+        
         if (project.project_products && Array.isArray(project.project_products)) {
           productIds = project.project_products
             .map((pp: any) => pp.product?.id || pp.product_id)
             .filter((id: string) => id);
+          // Load distributor for each product
+          project.project_products.forEach((pp: any) => {
+            const productId = pp.product?.id || pp.product_id;
+            if (productId && pp.distributor_id) {
+              productDistributors[productId] = pp.distributor_id;
+            }
+          });
         } else if (project.id) {
           const { data: productsData } = await supabase
             .from("project_products")
-            .select("product_id")
+            .select("product_id, distributor_id")
             .eq("project_id", project.id);
           productIds = (productsData || []).map((pp: any) => pp.product_id);
+          productsData?.forEach((pp: any) => {
+            if (pp.product_id && pp.distributor_id) {
+              productDistributors[pp.product_id] = pp.distributor_id;
+            }
+          });
         }
 
         if (project.project_presales && Array.isArray(project.project_presales)) {
@@ -180,13 +203,13 @@ export function ProjectDialog({
           pid: project.pid || "",
           customer_id: project.customer_id || "",
           sales_id: project.sales_id || "",
-          distributor_id: project.distributor_id || "",
           nilai_project: project.nilai_project?.toString() || "",
           periode_mulai: periodeMulaiValue,
           periode_selesai: periodeSelesaiValue,
           description: project.description || "",
           project_manager_id: project.project_manager_id || "",
           product_ids: productIds,
+          product_distributors: productDistributors,
           presales_ids: presalesIds,
           engineer_ids: engineerIds,
         });
@@ -195,13 +218,13 @@ export function ProjectDialog({
           pid: "",
           customer_id: "",
           sales_id: "",
-          distributor_id: "",
           nilai_project: "",
           periode_mulai: "",
           periode_selesai: "",
           description: "",
           project_manager_id: "",
           product_ids: [],
+          product_distributors: {},
           presales_ids: [],
           engineer_ids: [],
         });
@@ -226,7 +249,6 @@ export function ProjectDialog({
             pid: formData.pid || null,
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
-            distributor_id: formData.distributor_id || null,
             nilai_project: formData.nilai_project ? parseFloat(formData.nilai_project) : null,
             periode_mulai: formData.periode_mulai || null,
             periode_selesai: formData.periode_selesai || null,
@@ -249,6 +271,7 @@ export function ProjectDialog({
           const projectProducts = formData.product_ids.map((productId) => ({
             project_id: project.id,
             product_id: productId,
+            distributor_id: formData.product_distributors[productId] || null,
           }));
           const { error: ppError } = await supabase
             .from("project_products")
@@ -296,8 +319,8 @@ export function ProjectDialog({
             customer:customers(*),
             sales:users!sales_id(*),
             project_manager:users!project_manager_id(*),
-            distributor:distributors(*),
             project_products(
+              distributor_id,
               product:products(
                 *,
                 brand:brands(
@@ -307,7 +330,8 @@ export function ProjectDialog({
                     category:categories(*)
                   )
                 )
-              )
+              ),
+              distributor:distributors(*)
             ),
             project_presales(
               user:users(*)
@@ -326,6 +350,7 @@ export function ProjectDialog({
         }
         
         onSave(updatedProject);
+        setOpen(false);
         onClose();
       } else {
         // Create new project
@@ -335,7 +360,6 @@ export function ProjectDialog({
             pid: formData.pid || null,
             customer_id: formData.customer_id,
             sales_id: formData.sales_id,
-            distributor_id: formData.distributor_id || null,
             nilai_project: formData.nilai_project ? parseFloat(formData.nilai_project) : null,
             periode_mulai: formData.periode_mulai || null,
             periode_selesai: formData.periode_selesai || null,
@@ -352,6 +376,7 @@ export function ProjectDialog({
           const projectProducts = formData.product_ids.map((productId) => ({
             project_id: data.id,
             product_id: productId,
+            distributor_id: formData.product_distributors[productId] || null,
           }));
           const { error: ppError } = await supabase
             .from("project_products")
@@ -391,8 +416,8 @@ export function ProjectDialog({
             customer:customers(*),
             sales:users!sales_id(*),
             project_manager:users!project_manager_id(*),
-            distributor:distributors(*),
             project_products(
+              distributor_id,
               product:products(
                 *,
                 brand:brands(
@@ -402,7 +427,8 @@ export function ProjectDialog({
                     category:categories(*)
                   )
                 )
-              )
+              ),
+              distributor:distributors(*)
             ),
             project_presales(
               user:users(*)
@@ -448,9 +474,9 @@ export function ProjectDialog({
         } else {
           console.log("Project created successfully:", newProject);
           onSave(newProject);
+          setOpen(false);
+          onClose();
         }
-        
-        onClose();
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -461,7 +487,7 @@ export function ProjectDialog({
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
@@ -555,43 +581,23 @@ export function ProjectDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-slate-700 dark:text-slate-300">AM *</Label>
-              <select
-                value={formData.sales_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, sales_id: e.target.value })
-                }
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
-                required
-              >
-                <option value="">Select AM</option>
-                {sales.map((sale) => (
-                  <option key={sale.id} value={sale.id}>
-                    {sale.nama_lengkap}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-slate-700 dark:text-slate-300">Distributor</Label>
-              <select
-                value={formData.distributor_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, distributor_id: e.target.value })
-                }
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
-              >
-                <option value="">Select Distributor</option>
-                {distributors.map((distributor) => (
-                  <option key={distributor.id} value={distributor.id}>
-                    {distributor.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <Label className="text-slate-700 dark:text-slate-300">AM *</Label>
+            <select
+              value={formData.sales_id}
+              onChange={(e) =>
+                setFormData({ ...formData, sales_id: e.target.value })
+              }
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50"
+              required
+            >
+              <option value="">Select AM</option>
+              {sales.map((sale) => (
+                <option key={sale.id} value={sale.id}>
+                  {sale.nama_lengkap}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -619,7 +625,20 @@ export function ProjectDialog({
               value={formData.product_ids}
               onChange={(e) => {
                 const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                setFormData({ ...formData, product_ids: selectedIds });
+                // Initialize distributor for new products
+                const newDistributors = { ...formData.product_distributors };
+                selectedIds.forEach((id) => {
+                  if (!newDistributors[id]) {
+                    newDistributors[id] = "";
+                  }
+                });
+                // Remove distributors for unselected products
+                Object.keys(newDistributors).forEach((id) => {
+                  if (!selectedIds.includes(id)) {
+                    delete newDistributors[id];
+                  }
+                });
+                setFormData({ ...formData, product_ids: selectedIds, product_distributors: newDistributors });
               }}
               className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
               size={5}
@@ -634,6 +653,45 @@ export function ProjectDialog({
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Hold Ctrl (Windows) or Cmd (Mac) to select multiple products
             </p>
+            
+            {/* Distributor selection for each selected product */}
+            {formData.product_ids.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <Label className="text-slate-700 dark:text-slate-300">Distributor per Product</Label>
+                {formData.product_ids.map((productId) => {
+                  const product = products.find((p) => p.id === productId);
+                  return (
+                    <div key={productId} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">
+                          {product?.brand?.sub_category?.category?.name} - {product?.brand?.sub_category?.name} - {product?.brand?.name} - {product?.name}
+                        </p>
+                      </div>
+                      <select
+                        value={formData.product_distributors[productId] || ""}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            product_distributors: {
+                              ...formData.product_distributors,
+                              [productId]: e.target.value,
+                            },
+                          });
+                        }}
+                        className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 text-sm min-w-[200px]"
+                      >
+                        <option value="">No Distributor</option>
+                        {distributors.map((distributor) => (
+                          <option key={distributor.id} value={distributor.id}>
+                            {distributor.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -709,4 +767,3 @@ export function ProjectDialog({
     </Dialog>
   );
 }
-
