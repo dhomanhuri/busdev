@@ -1,7 +1,7 @@
 "use client";
 
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { ProjectsByStatusChart, ProjectsByAMChart, ProjectsByAMRevenueChart, ProjectsTrendChart, TopCustomersByRevenueChart } from "@/components/dashboard/projects-chart";
+import { ProjectsByAMChart, ProjectsByAMRevenueChart, TopCustomersByRevenueChart } from "@/components/dashboard/projects-chart";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { TopCustomers } from "@/components/dashboard/top-customers";
 import { DraggableDashboard } from "./draggable-dashboard";
@@ -57,24 +57,16 @@ export function DashboardContent({
   ];
 
   const charts = [
-    <ProjectsByStatusChart
+    <ProjectsByAMChart
       key="chart-0"
       data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects}
     />,
-    <ProjectsByAMChart
+    <ProjectsByAMRevenueChart
       key="chart-1"
       data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects}
     />,
-    <ProjectsByAMRevenueChart
-      key="chart-2"
-      data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects}
-    />,
     <TopCustomersByRevenueChart
-      key="chart-3"
-      data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects}
-    />,
-    <ProjectsTrendChart
-      key="chart-4"
+      key="chart-2"
       data={userProfile.role === 'Admin' || userProfile.role === 'GM' ? projects : filteredProjects}
     />,
   ];
