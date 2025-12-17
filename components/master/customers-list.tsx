@@ -58,13 +58,12 @@ export function CustomersList({ initialCustomers }: { initialCustomers: any[] })
     });
 
   const handleCustomerSaved = (updatedCustomer: any) => {
-    if (editingCustomer) {
-      setCustomers(customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
-      setEditingCustomer(null);
-    } else {
-      setCustomers([updatedCustomer, ...customers]);
-    }
+    // Close dialog first
     setShowDialog(false);
+    setEditingCustomer(null);
+    
+    // Reload the page immediately to refresh all data
+    window.location.reload();
   };
 
   const handleDeleteCustomer = async (customerId: string) => {

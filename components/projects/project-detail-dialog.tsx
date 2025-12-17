@@ -33,6 +33,28 @@ export function ProjectDetailDialog({
   project: any | null;
   onClose: () => void;
 }) {
+  const [open, setOpen] = React.useState(!!project);
+
+  React.useEffect(() => {
+    // Reset open state when project changes
+    setOpen(!!project);
+  }, [project]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Close dialog first
+      setOpen(false);
+      // Then call onClose to reset parent state
+      // Use setTimeout to ensure dialog closes before state reset
+      setTimeout(() => {
+        onClose();
+      }, 100);
+    } else {
+      setOpen(isOpen);
+    }
+  };
+
+  // Don't render if no project
   if (!project) return null;
 
   const InfoItem = ({
@@ -63,7 +85,7 @@ export function ProjectDetailDialog({
   );
 
   return (
-    <Dialog open={!!project} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 text-slate-900 dark:text-slate-50 max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar scroll-smooth rounded-2xl shadow-2xl">
         <DialogHeader className="pb-6 border-b-2 border-slate-200/60 dark:border-slate-800/60">
           <div className="space-y-6">

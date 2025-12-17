@@ -27,6 +27,9 @@ export function ProjectDialog({
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
+      // Reset all states when closing
+      setIsLoading(false);
+      setError("");
       onClose();
     }
   };
@@ -231,6 +234,11 @@ export function ProjectDialog({
       }
     };
     loadProjectData();
+    
+    // Reset dialog state when project changes
+    setOpen(true);
+    setIsLoading(false);
+    setError("");
   }, [project]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -349,9 +357,16 @@ export function ProjectDialog({
           throw new Error("Failed to load updated project");
         }
         
-        onSave(updatedProject);
+        // Close dialog first
+        setIsLoading(false);
         setOpen(false);
         onClose();
+        
+        // Call onSave (handler will also try to reload)
+        onSave(updatedProject);
+        
+        // Force reload immediately as backup
+        window.location.reload();
       } else {
         // Create new project
         const { data, error: createError } = await supabase
@@ -455,7 +470,13 @@ export function ProjectDialog({
             project_engineers: []
           };
           console.log("Using fallback project data:", fallbackProject);
+          // Close dialog first
+          setIsLoading(false);
+          setOpen(false);
+          onClose();
           onSave(fallbackProject);
+          // Force reload immediately as backup
+          window.location.reload();
         } else if (!newProject) {
           console.error("No project data returned from reload");
           // Fallback: use the basic data from insert
@@ -470,18 +491,27 @@ export function ProjectDialog({
             project_engineers: []
           };
           console.log("Using fallback project data:", fallbackProject);
-          onSave(fallbackProject);
-        } else {
-          console.log("Project created successfully:", newProject);
-          onSave(newProject);
+          // Close dialog first
+          setIsLoading(false);
           setOpen(false);
           onClose();
+          onSave(fallbackProject);
+          // Force reload immediately as backup
+          window.location.reload();
+        } else {
+          console.log("Project created successfully:", newProject);
+          // Close dialog first
+          setIsLoading(false);
+          setOpen(false);
+          onClose();
+          onSave(newProject);
+          // Force reload immediately as backup
+          window.location.reload();
         }
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
       console.error("Error saving project:", err);
-    } finally {
       setIsLoading(false);
     }
   };

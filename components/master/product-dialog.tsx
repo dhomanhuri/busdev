@@ -150,7 +150,15 @@ export function ProductDialog({
           if (prError) throw prError;
         }
 
+        // Close dialog first
+        setIsLoading(false);
+        onClose();
+        
+        // Call onSave (handler will also try to reload)
         onSave(data);
+        
+        // Force reload immediately as backup
+        window.location.reload();
       } else {
         // Create new product
         const { data, error: createError } = await supabase
@@ -180,11 +188,18 @@ export function ProductDialog({
           if (prError) throw prError;
         }
 
+        // Close dialog first
+        setIsLoading(false);
+        onClose();
+        
+        // Call onSave (handler will also try to reload)
         onSave(data);
+        
+        // Force reload immediately as backup
+        window.location.reload();
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };

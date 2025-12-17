@@ -79,7 +79,16 @@ export function SubCategoryDialog({
           .single();
 
         if (updateError) throw updateError;
+        
+        // Close dialog first
+        setIsLoading(false);
+        onClose();
+        
+        // Call onSave (handler will also try to reload)
         onSave(data);
+        
+        // Force reload immediately as backup
+        window.location.reload();
       } else {
         // Create new sub category
         const { data, error: createError } = await supabase
@@ -94,11 +103,19 @@ export function SubCategoryDialog({
           .single();
 
         if (createError) throw createError;
+        
+        // Close dialog first
+        setIsLoading(false);
+        onClose();
+        
+        // Call onSave (handler will also try to reload)
         onSave(data);
+        
+        // Force reload immediately as backup
+        window.location.reload();
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };

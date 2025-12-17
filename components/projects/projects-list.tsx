@@ -190,7 +190,7 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
         />
       )}
 
-      {showDetailDialog && (
+      {showDetailDialog && viewingProject && (
         <ProjectDetailDialog
           project={viewingProject}
           onClose={() => {
