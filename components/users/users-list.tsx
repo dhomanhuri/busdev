@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function UsersList({ initialUsers }: { initialUsers: any[] }) {
+  const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
@@ -62,21 +64,13 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
     });
 
   const handleUserSaved = async (updatedUser: any) => {
-    // Refresh user data to get latest avatar_url
-    const supabase = createClient();
-    const { data: freshUser } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", updatedUser.id)
-      .single();
-
-    if (editingUser) {
-      setUsers(users.map(u => u.id === updatedUser.id ? (freshUser || updatedUser) : u));
-      setEditingUser(null);
-    } else {
-      setUsers([freshUser || updatedUser, ...users]);
-    }
+    // Close dialog first
     setShowDialog(false);
+    setEditingUser(null);
+    
+    // Reload the page to refresh all data and clear any state issues
+    // This ensures a clean state after edit
+    window.location.reload();
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -90,7 +84,9 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
         .eq("id", userId);
 
       if (error) throw error;
-      setUsers(users.filter(u => u.id !== userId));
+      
+      // Reload page to refresh data
+      window.location.reload();
     } catch (err: any) {
       alert("Failed to delete user: " + err.message);
     }

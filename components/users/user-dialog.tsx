@@ -29,6 +29,12 @@ export function UserDialog({
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
+      // Reset all states when closing
+      setShowCropper(false);
+      setImageToCrop("");
+      setUploading(false);
+      setIsLoading(false);
+      setError("");
       onClose();
     }
   };
@@ -36,6 +42,10 @@ export function UserDialog({
   useEffect(() => {
     // Reset open state when user changes (dialog opens)
     setOpen(true);
+    // Reset cropper state when dialog opens
+    setShowCropper(false);
+    setImageToCrop("");
+    setUploading(false);
   }, [user]);
 
   const [formData, setFormData] = useState({
@@ -293,12 +303,18 @@ export function UserDialog({
         }
 
         const updatedUser = { ...user, ...formData };
+        
+        // Reset states and close dialog
+        setIsLoading(false);
+        setShowCropper(false);
+        setImageToCrop("");
+        setUploading(false);
+        setError("");
         setOpen(false);
         onClose();
-        // Use setTimeout to ensure dialog closes and unmounts before calling onSave
-        setTimeout(() => {
-          onSave(updatedUser);
-        }, 150);
+        
+        // Call onSave which will reload the page
+        onSave(updatedUser);
       } else {
         // Create new user via auth
         const { data: signUpData, error: signUpError } =
@@ -359,9 +375,9 @@ export function UserDialog({
           if (profileUpdateError) throw profileUpdateError;
 
           // Insert user certificates
-          if (formData.certificate_ids.length > 0) {
+          if (formData.certificate_ids.length > 0 && signUpData.user?.id) {
             const userCertificates = formData.certificate_ids.map((certificateId) => ({
-              user_id: signUpData.user.id,
+              user_id: signUpData.user!.id,
               certificate_id: certificateId,
             }));
 
@@ -378,12 +394,18 @@ export function UserDialog({
           ...formData,
           avatar_url: avatarUrl,
         };
+        
+        // Reset states and close dialog
+        setIsLoading(false);
+        setShowCropper(false);
+        setImageToCrop("");
+        setUploading(false);
+        setError("");
         setOpen(false);
         onClose();
-        // Use setTimeout to ensure dialog closes and unmounts before calling onSave
-        setTimeout(() => {
-          onSave(newUser);
-        }, 150);
+        
+        // Call onSave which will reload the page
+        onSave(newUser);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -393,11 +415,12 @@ export function UserDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50">
-        <DialogHeader>
-          <DialogTitle className="text-slate-900 dark:text-slate-50">{user ? "Edit User" : "Add New User"}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">{user ? "Edit User" : "Add New User"}</DialogTitle>
+          </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
@@ -600,6 +623,7 @@ export function UserDialog({
           </div>
         </form>
       </DialogContent>
+      </Dialog>
 
       {showCropper && (
         <ImageCropper
@@ -612,6 +636,6 @@ export function UserDialog({
           aspect={1}
         />
       )}
-    </Dialog>
+    </>
   );
 }
