@@ -24,14 +24,131 @@ export function ProjectDialog({
 }) {
   const [open, setOpen] = useState(true);
 
+  const resetForm = async () => {
+    if (project) {
+      let productIds: string[] = [];
+      let presalesIds: string[] = [];
+      let engineerIds: string[] = [];
+
+      // Load junction table data
+      const supabase = createClient();
+
+      let productDistributors: Record<string, string> = {};
+      
+      if (project.project_products && Array.isArray(project.project_products)) {
+        productIds = project.project_products
+          .map((pp: any) => pp.product?.id || pp.product_id)
+          .filter((id: string) => id);
+        // Load distributor for each product
+        project.project_products.forEach((pp: any) => {
+          const productId = pp.product?.id || pp.product_id;
+          if (productId && pp.distributor_id) {
+            productDistributors[productId] = pp.distributor_id;
+          }
+        });
+      } else if (project.id) {
+        const { data: productsData } = await supabase
+          .from("project_products")
+          .select("product_id, distributor_id")
+          .eq("project_id", project.id);
+        productIds = (productsData || []).map((pp: any) => pp.product_id);
+        productsData?.forEach((pp: any) => {
+          if (pp.product_id && pp.distributor_id) {
+            productDistributors[pp.product_id] = pp.distributor_id;
+          }
+        });
+      }
+
+      if (project.project_presales && Array.isArray(project.project_presales)) {
+        presalesIds = project.project_presales
+          .map((pp: any) => pp.user?.id || pp.user_id)
+          .filter((id: string) => id);
+      } else if (project.id) {
+        const { data: presalesData } = await supabase
+          .from("project_presales")
+          .select("user_id")
+          .eq("project_id", project.id);
+        presalesIds = (presalesData || []).map((pp: any) => pp.user_id);
+      }
+
+      if (project.project_engineers && Array.isArray(project.project_engineers)) {
+        engineerIds = project.project_engineers
+          .map((pe: any) => pe.user?.id || pe.user_id)
+          .filter((id: string) => id);
+      } else if (project.id) {
+        const { data: engineersData } = await supabase
+          .from("project_engineers")
+          .select("user_id")
+          .eq("project_id", project.id);
+        engineerIds = (engineersData || []).map((pe: any) => pe.user_id);
+      }
+
+      // Format dates for input[type="date"]
+      const periodeMulaiValue = project.periode_mulai
+        ? new Date(project.periode_mulai).toISOString().split('T')[0]
+        : "";
+      const periodeSelesaiValue = project.periode_selesai
+        ? new Date(project.periode_selesai).toISOString().split('T')[0]
+        : "";
+
+      setFormData({
+        pid: project.pid || "",
+        customer_id: project.customer_id || "",
+        sales_id: project.sales_id || "",
+        nilai_project: project.nilai_project?.toString() || "",
+        periode_mulai: periodeMulaiValue,
+        periode_selesai: periodeSelesaiValue,
+        description: project.description || "",
+        project_manager_id: project.project_manager_id || "",
+        product_ids: productIds,
+        product_distributors: productDistributors,
+        presales_ids: presalesIds,
+        engineer_ids: engineerIds,
+      });
+    } else {
+      setFormData({
+        pid: "",
+        customer_id: "",
+        sales_id: "",
+        nilai_project: "",
+        periode_mulai: "",
+        periode_selesai: "",
+        description: "",
+        project_manager_id: "",
+        product_ids: [],
+        product_distributors: {},
+        presales_ids: [],
+        engineer_ids: [],
+      });
+    }
+  };
+
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
       // Reset all states when closing
       setIsLoading(false);
       setError("");
-      onClose();
+      resetForm();
+      // Delay to ensure dialog closes properly before calling onClose
+      setTimeout(() => {
+        onClose();
+        // Hard reload to ensure all state is reset
+        window.location.reload();
+      }, 100);
     }
+  };
+
+  const handleCancel = () => {
+    setIsLoading(false);
+    setError("");
+    resetForm();
+    setOpen(false);
+    setTimeout(() => {
+      onClose();
+      // Hard reload to ensure all state is reset
+      window.location.reload();
+    }, 100);
   };
 
   const [formData, setFormData] = useState({
@@ -135,105 +252,7 @@ export function ProjectDialog({
   }, []);
 
   useEffect(() => {
-    const loadProjectData = async () => {
-      if (project) {
-        let productIds: string[] = [];
-        let presalesIds: string[] = [];
-        let engineerIds: string[] = [];
-
-        // Load junction table data
-        const supabase = createClient();
-
-        let productDistributors: Record<string, string> = {};
-        
-        if (project.project_products && Array.isArray(project.project_products)) {
-          productIds = project.project_products
-            .map((pp: any) => pp.product?.id || pp.product_id)
-            .filter((id: string) => id);
-          // Load distributor for each product
-          project.project_products.forEach((pp: any) => {
-            const productId = pp.product?.id || pp.product_id;
-            if (productId && pp.distributor_id) {
-              productDistributors[productId] = pp.distributor_id;
-            }
-          });
-        } else if (project.id) {
-          const { data: productsData } = await supabase
-            .from("project_products")
-            .select("product_id, distributor_id")
-            .eq("project_id", project.id);
-          productIds = (productsData || []).map((pp: any) => pp.product_id);
-          productsData?.forEach((pp: any) => {
-            if (pp.product_id && pp.distributor_id) {
-              productDistributors[pp.product_id] = pp.distributor_id;
-            }
-          });
-        }
-
-        if (project.project_presales && Array.isArray(project.project_presales)) {
-          presalesIds = project.project_presales
-            .map((pp: any) => pp.user?.id || pp.user_id)
-            .filter((id: string) => id);
-        } else if (project.id) {
-          const { data: presalesData } = await supabase
-            .from("project_presales")
-            .select("user_id")
-            .eq("project_id", project.id);
-          presalesIds = (presalesData || []).map((pp: any) => pp.user_id);
-        }
-
-        if (project.project_engineers && Array.isArray(project.project_engineers)) {
-          engineerIds = project.project_engineers
-            .map((pe: any) => pe.user?.id || pe.user_id)
-            .filter((id: string) => id);
-        } else if (project.id) {
-          const { data: engineersData } = await supabase
-            .from("project_engineers")
-            .select("user_id")
-            .eq("project_id", project.id);
-          engineerIds = (engineersData || []).map((pe: any) => pe.user_id);
-        }
-
-        // Format dates for input[type="date"]
-        const periodeMulaiValue = project.periode_mulai
-          ? new Date(project.periode_mulai).toISOString().split('T')[0]
-          : "";
-        const periodeSelesaiValue = project.periode_selesai
-          ? new Date(project.periode_selesai).toISOString().split('T')[0]
-          : "";
-
-        setFormData({
-          pid: project.pid || "",
-          customer_id: project.customer_id || "",
-          sales_id: project.sales_id || "",
-          nilai_project: project.nilai_project?.toString() || "",
-          periode_mulai: periodeMulaiValue,
-          periode_selesai: periodeSelesaiValue,
-          description: project.description || "",
-          project_manager_id: project.project_manager_id || "",
-          product_ids: productIds,
-          product_distributors: productDistributors,
-          presales_ids: presalesIds,
-          engineer_ids: engineerIds,
-        });
-      } else {
-        setFormData({
-          pid: "",
-          customer_id: "",
-          sales_id: "",
-          nilai_project: "",
-          periode_mulai: "",
-          periode_selesai: "",
-          description: "",
-          project_manager_id: "",
-          product_ids: [],
-          product_distributors: {},
-          presales_ids: [],
-          engineer_ids: [],
-        });
-      }
-    };
-    loadProjectData();
+    resetForm();
     
     // Reset dialog state when project changes
     setOpen(true);
@@ -360,13 +379,14 @@ export function ProjectDialog({
         // Close dialog first
         setIsLoading(false);
         setOpen(false);
-        onClose();
+        await resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(updatedProject);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(updatedProject);
+          onClose();
+          window.location.reload();
+        }, 100);
       } else {
         // Create new project
         const { data, error: createError } = await supabase
@@ -473,10 +493,14 @@ export function ProjectDialog({
           // Close dialog first
           setIsLoading(false);
           setOpen(false);
-          onClose();
-          onSave(fallbackProject);
-          // Force reload immediately as backup
-          window.location.reload();
+          await resetForm();
+          
+          // Call onSave (handler will also try to reload)
+          setTimeout(() => {
+            onSave(fallbackProject);
+            onClose();
+            window.location.reload();
+          }, 100);
         } else if (!newProject) {
           console.error("No project data returned from reload");
           // Fallback: use the basic data from insert
@@ -494,19 +518,27 @@ export function ProjectDialog({
           // Close dialog first
           setIsLoading(false);
           setOpen(false);
-          onClose();
-          onSave(fallbackProject);
-          // Force reload immediately as backup
-          window.location.reload();
+          await resetForm();
+          
+          // Call onSave (handler will also try to reload)
+          setTimeout(() => {
+            onSave(fallbackProject);
+            onClose();
+            window.location.reload();
+          }, 100);
         } else {
           console.log("Project created successfully:", newProject);
           // Close dialog first
           setIsLoading(false);
           setOpen(false);
-          onClose();
-          onSave(newProject);
-          // Force reload immediately as backup
-          window.location.reload();
+          await resetForm();
+          
+          // Call onSave (handler will also try to reload)
+          setTimeout(() => {
+            onSave(newProject);
+            onClose();
+            window.location.reload();
+          }, 100);
         }
       }
     } catch (err: any) {
@@ -779,7 +811,7 @@ export function ProjectDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCancel}
               className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
             >
               Cancel

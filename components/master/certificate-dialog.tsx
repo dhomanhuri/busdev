@@ -30,6 +30,7 @@ export function CertificateDialog({
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -53,43 +54,44 @@ export function CertificateDialog({
     loadProducts();
   }, []);
 
-  useEffect(() => {
-    const loadCertificateProducts = async () => {
-      if (certificate) {
-        let productIds: string[] = [];
+  const resetForm = async () => {
+    if (certificate) {
+      let productIds: string[] = [];
+      
+      // If certificate has product_certificates loaded from page, use them
+      if (certificate.product_certificates && Array.isArray(certificate.product_certificates)) {
+        productIds = certificate.product_certificates
+          .map((pc: any) => pc.product?.id || pc.product_id)
+          .filter((id: string) => id);
+      } else if (certificate.id) {
+        // Otherwise, load from database
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("product_certificates")
+          .select("product_id")
+          .eq("certificate_id", certificate.id);
         
-        // If certificate has product_certificates loaded from page, use them
-        if (certificate.product_certificates && Array.isArray(certificate.product_certificates)) {
-          productIds = certificate.product_certificates
-            .map((pc: any) => pc.product?.id || pc.product_id)
-            .filter((id: string) => id);
-        } else if (certificate.id) {
-          // Otherwise, load from database
-          const supabase = createClient();
-          const { data } = await supabase
-            .from("product_certificates")
-            .select("product_id")
-            .eq("certificate_id", certificate.id);
-          
-          productIds = (data || []).map((pc: any) => pc.product_id);
-        }
-
-        setFormData({
-          name: certificate.name || "",
-          description: certificate.description || "",
-          status_aktif: certificate.status_aktif ?? true,
-          product_ids: productIds,
-        });
-      } else {
-        setFormData({
-          name: "",
-          description: "",
-          status_aktif: true,
-          product_ids: [],
-        });
+        productIds = (data || []).map((pc: any) => pc.product_id);
       }
-    };
-    loadCertificateProducts();
+
+      setFormData({
+        name: certificate.name || "",
+        description: certificate.description || "",
+        status_aktif: certificate.status_aktif ?? true,
+        product_ids: productIds,
+      });
+    } else {
+      setFormData({
+        name: "",
+        description: "",
+        status_aktif: true,
+        product_ids: [],
+      });
+    }
+  };
+
+  useEffect(() => {
+    resetForm();
   }, [certificate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,7 +139,17 @@ export function CertificateDialog({
           if (pcError) throw pcError;
         }
 
-        onSave(data);
+        // Close dialog first
+        setIsLoading(false);
+        setOpen(false);
+        await resetForm();
+        
+        // Call onSave (handler will also try to reload)
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       } else {
         // Create new certificate
         const { data, error: createError } = await supabase
@@ -166,17 +178,50 @@ export function CertificateDialog({
           if (pcError) throw pcError;
         }
 
-        onSave(data);
+        // Close dialog first
+        setIsLoading(false);
+        setOpen(false);
+        await resetForm();
+        
+        // Call onSave (handler will also try to reload)
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Reset all states when closing
+      setIsLoading(false);
+      setError("");
+      resetForm();
+      // Delay to ensure dialog closes properly before calling onClose
+      setTimeout(() => {
+        onClose();
+      }, 100);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsLoading(false);
+    setError("");
+    resetForm();
+    setOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
@@ -253,7 +298,7 @@ export function CertificateDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCancel}
               className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
             >
               Cancel

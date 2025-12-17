@@ -32,6 +32,7 @@ export function ProductDialog({
   const [readiness, setReadiness] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -63,45 +64,46 @@ export function ProductDialog({
     loadReadiness();
   }, []);
 
-  useEffect(() => {
-    const loadProductReadiness = async () => {
-      if (product) {
-        let readinessIds: string[] = [];
+  const resetForm = async () => {
+    if (product) {
+      let readinessIds: string[] = [];
+      
+      // If product has product_readiness loaded from page, use them
+      if (product.product_readiness && Array.isArray(product.product_readiness)) {
+        readinessIds = product.product_readiness
+          .map((pr: any) => pr.readiness?.id || pr.readiness_id)
+          .filter((id: string) => id);
+      } else if (product.id) {
+        // Otherwise, load from database
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("product_readiness")
+          .select("readiness_id")
+          .eq("product_id", product.id);
         
-        // If product has product_readiness loaded from page, use them
-        if (product.product_readiness && Array.isArray(product.product_readiness)) {
-          readinessIds = product.product_readiness
-            .map((pr: any) => pr.readiness?.id || pr.readiness_id)
-            .filter((id: string) => id);
-        } else if (product.id) {
-          // Otherwise, load from database
-          const supabase = createClient();
-          const { data } = await supabase
-            .from("product_readiness")
-            .select("readiness_id")
-            .eq("product_id", product.id);
-          
-          readinessIds = (data || []).map((pr: any) => pr.readiness_id);
-        }
-
-        setFormData({
-          brand_id: product.brand_id || "",
-          name: product.name || "",
-          description: product.description || "",
-          status_aktif: product.status_aktif ?? true,
-          readiness_ids: readinessIds,
-        });
-      } else {
-        setFormData({
-          brand_id: "",
-          name: "",
-          description: "",
-          status_aktif: true,
-          readiness_ids: [],
-        });
+        readinessIds = (data || []).map((pr: any) => pr.readiness_id);
       }
-    };
-    loadProductReadiness();
+
+      setFormData({
+        brand_id: product.brand_id || "",
+        name: product.name || "",
+        description: product.description || "",
+        status_aktif: product.status_aktif ?? true,
+        readiness_ids: readinessIds,
+      });
+    } else {
+      setFormData({
+        brand_id: "",
+        name: "",
+        description: "",
+        status_aktif: true,
+        readiness_ids: [],
+      });
+    }
+  };
+
+  useEffect(() => {
+    resetForm();
   }, [product]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,13 +154,15 @@ export function ProductDialog({
 
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        await resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       } else {
         // Create new product
         const { data, error: createError } = await supabase
@@ -190,13 +194,15 @@ export function ProductDialog({
 
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        await resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -204,8 +210,36 @@ export function ProductDialog({
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Reset all states when closing
+      setIsLoading(false);
+      setError("");
+      resetForm();
+      // Delay to ensure dialog closes properly before calling onClose
+      setTimeout(() => {
+        onClose();
+        // Hard reload to ensure all state is reset
+        window.location.reload();
+      }, 100);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsLoading(false);
+    setError("");
+    resetForm();
+    setOpen(false);
+    setTimeout(() => {
+      onClose();
+      // Hard reload to ensure all state is reset
+      window.location.reload();
+    }, 100);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
@@ -301,7 +335,7 @@ export function ProductDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCancel}
               className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
             >
               Cancel

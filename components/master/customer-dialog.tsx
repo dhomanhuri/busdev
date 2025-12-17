@@ -28,8 +28,9 @@ export function CustomerDialog({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(true);
 
-  useEffect(() => {
+  const resetForm = () => {
     if (customer) {
       setFormData({
         nama: customer.nama || "",
@@ -43,6 +44,10 @@ export function CustomerDialog({
         status_aktif: true,
       });
     }
+  };
+
+  useEffect(() => {
+    resetForm();
   }, [customer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,13 +76,15 @@ export function CustomerDialog({
         
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       } else {
         // Create new customer
         const { data, error: createError } = await supabase
@@ -94,13 +101,15 @@ export function CustomerDialog({
         
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -108,8 +117,32 @@ export function CustomerDialog({
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Reset all states when closing
+      setIsLoading(false);
+      setError("");
+      resetForm();
+      // Delay to ensure dialog closes properly before calling onClose
+      setTimeout(() => {
+        onClose();
+      }, 100);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsLoading(false);
+    setError("");
+    resetForm();
+    setOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
@@ -163,7 +196,7 @@ export function CustomerDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCancel}
               className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
             >
               Cancel

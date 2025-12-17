@@ -270,7 +270,7 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                             <DropdownMenuContent align="end" className="w-[180px] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-xl backdrop-blur-sm bg-white/95 dark:bg-slate-900/95">
                           <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          {/* <DropdownMenuItem 
                             onClick={(e) => {
                               e.stopPropagation();
                               setViewingProject(project);
@@ -280,7 +280,7 @@ export function ProjectsList({ initialProjects }: { initialProjects: any[] }) {
                           >
                             <Eye className="mr-2 h-4 w-4 text-emerald-500" />
                             View Details
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                           <DropdownMenuItem 
                             onClick={(e) => {
                               e.stopPropagation();

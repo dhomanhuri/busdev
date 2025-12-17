@@ -32,6 +32,7 @@ export function BrandDialog({
   const [partnerships, setPartnerships] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     const loadSubCategories = async () => {
@@ -60,45 +61,46 @@ export function BrandDialog({
     loadPartnerships();
   }, []);
 
-  useEffect(() => {
-    const loadBrandPartnerships = async () => {
-      if (brand) {
-        let partnershipIds: string[] = [];
+  const resetForm = async () => {
+    if (brand) {
+      let partnershipIds: string[] = [];
+      
+      // If brand has brand_partnerships loaded from page, use them
+      if (brand.brand_partnerships && Array.isArray(brand.brand_partnerships)) {
+        partnershipIds = brand.brand_partnerships
+          .map((bp: any) => bp.partnership?.id || bp.partnership_id)
+          .filter((id: string) => id);
+      } else if (brand.id) {
+        // Otherwise, load from database
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("brand_partnerships")
+          .select("partnership_id")
+          .eq("brand_id", brand.id);
         
-        // If brand has brand_partnerships loaded from page, use them
-        if (brand.brand_partnerships && Array.isArray(brand.brand_partnerships)) {
-          partnershipIds = brand.brand_partnerships
-            .map((bp: any) => bp.partnership?.id || bp.partnership_id)
-            .filter((id: string) => id);
-        } else if (brand.id) {
-          // Otherwise, load from database
-          const supabase = createClient();
-          const { data } = await supabase
-            .from("brand_partnerships")
-            .select("partnership_id")
-            .eq("brand_id", brand.id);
-          
-          partnershipIds = (data || []).map((bp: any) => bp.partnership_id);
-        }
-
-        setFormData({
-          sub_category_id: brand.sub_category_id || "",
-          name: brand.name || "",
-          description: brand.description || "",
-          status_aktif: brand.status_aktif ?? true,
-          partnership_ids: partnershipIds,
-        });
-      } else {
-        setFormData({
-          sub_category_id: "",
-          name: "",
-          description: "",
-          status_aktif: true,
-          partnership_ids: [],
-        });
+        partnershipIds = (data || []).map((bp: any) => bp.partnership_id);
       }
-    };
-    loadBrandPartnerships();
+
+      setFormData({
+        sub_category_id: brand.sub_category_id || "",
+        name: brand.name || "",
+        description: brand.description || "",
+        status_aktif: brand.status_aktif ?? true,
+        partnership_ids: partnershipIds,
+      });
+    } else {
+      setFormData({
+        sub_category_id: "",
+        name: "",
+        description: "",
+        status_aktif: true,
+        partnership_ids: [],
+      });
+    }
+  };
+
+  useEffect(() => {
+    resetForm();
   }, [brand]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,13 +151,15 @@ export function BrandDialog({
 
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        await resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       } else {
         // Create new brand
         const { data, error: createError } = await supabase
@@ -187,13 +191,15 @@ export function BrandDialog({
 
         // Close dialog first
         setIsLoading(false);
-        onClose();
+        setOpen(false);
+        await resetForm();
         
         // Call onSave (handler will also try to reload)
-        onSave(data);
-        
-        // Force reload immediately as backup
-        window.location.reload();
+        setTimeout(() => {
+          onSave(data);
+          onClose();
+          window.location.reload();
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -201,8 +207,32 @@ export function BrandDialog({
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Reset all states when closing
+      setIsLoading(false);
+      setError("");
+      resetForm();
+      // Delay to ensure dialog closes properly before calling onClose
+      setTimeout(() => {
+        onClose();
+      }, 100);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsLoading(false);
+    setError("");
+    resetForm();
+    setOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-slate-50">
@@ -298,7 +328,7 @@ export function BrandDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCancel}
               className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300"
             >
               Cancel
