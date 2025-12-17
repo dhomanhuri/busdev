@@ -186,7 +186,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Name</th>
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Email</th>
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Role</th>
-                    <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Department</th>
+                    <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider hidden">Department</th>
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Certificates</th>
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-center">Status</th>
                     <th className="py-5 px-6 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-center">Actions</th>
@@ -237,7 +237,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                           {user?.role=="Sales" ? "AM" : user?.role}
                         </Badge>
                       </td>
-                      <td className="py-5 px-6">
+                      <td className="py-5 px-6 hidden">
                         <span className="text-slate-600 dark:text-slate-400">{user.role === "GM" ? (user.department || "-") : "-"}</span>
                       </td>
                       <td className="py-5 px-6">

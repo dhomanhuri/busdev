@@ -316,27 +316,37 @@ export function UserDialog({
         // Call onSave which will reload the page
         onSave(updatedUser);
       } else {
-        // Create new user via auth
-        const { data: signUpData, error: signUpError } =
-          await supabase.auth.signUp({
+        // Create new user via API route (this won't change the current session)
+        const response = await fetch("/api/users/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
             email: formData.email,
-            password: formData.password || Math.random().toString(36).substring(7),
-            options: {
-              data: {
-                nama_lengkap: formData.nama_lengkap,
-                role: formData.role,
-              },
-            },
-          });
+            password: formData.password,
+            nama_lengkap: formData.nama_lengkap,
+            role: formData.role,
+            gm_id: formData.gm_id || null,
+            department: formData.department || null,
+            status_aktif: formData.status_aktif,
+            avatar_url: formData.avatar_url || null,
+            certificate_ids: formData.certificate_ids || [],
+          }),
+        });
 
-        if (signUpError) throw signUpError;
+        const result = await response.json();
 
-        let avatarUrl = formData.avatar_url;
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to create user");
+        }
+
+        let avatarUrl = result.user.avatar_url;
 
         // Upload pending file if exists (cropped image)
-        if (pendingFile && signUpData.user?.id) {
+        if (pendingFile && result.user?.id) {
           try {
-            const fileName = `${signUpData.user.id}-${Date.now()}.jpg`;
+            const fileName = `${result.user.id}-${Date.now()}.jpg`;
             const filePath = `avatars/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
@@ -352,45 +362,24 @@ export function UserDialog({
                 data: { publicUrl },
               } = supabase.storage.from("avatars").getPublicUrl(filePath);
               avatarUrl = publicUrl;
+
+              // Update user profile with avatar URL
+              const { error: updateError } = await supabase
+                .from("users")
+                .update({ avatar_url: publicUrl })
+                .eq("id", result.user.id);
+
+              if (updateError) {
+                console.error("Error updating avatar URL:", updateError);
+              }
             }
           } catch (uploadErr) {
             console.error("Error uploading avatar:", uploadErr);
           }
         }
 
-        // Ensure profile row is completed with gm_id, department, avatar_url and status_aktif
-        if (signUpData.user?.id) {
-          const { error: profileUpdateError } = await supabase
-            .from("users")
-            .update({
-              nama_lengkap: formData.nama_lengkap,
-              role: formData.role,
-              gm_id: formData.role === "Sales" ? (formData.gm_id || null) : null,
-              department: formData.role === "GM" ? (formData.department || null) : null,
-              avatar_url: avatarUrl || null,
-              status_aktif: formData.status_aktif,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", signUpData.user.id);
-          if (profileUpdateError) throw profileUpdateError;
-
-          // Insert user certificates
-          if (formData.certificate_ids.length > 0 && signUpData.user?.id) {
-            const userCertificates = formData.certificate_ids.map((certificateId) => ({
-              user_id: signUpData.user!.id,
-              certificate_id: certificateId,
-            }));
-
-            const { error: ucError } = await supabase
-              .from("user_certificates")
-              .insert(userCertificates);
-
-            if (ucError) throw ucError;
-          }
-        }
-
         const newUser = {
-          id: signUpData.user?.id,
+          id: result.user.id,
           ...formData,
           avatar_url: avatarUrl,
         };

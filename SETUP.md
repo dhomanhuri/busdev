@@ -20,7 +20,18 @@ Create a `.env.local` file in the root directory:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
+
+**How to get Service Role Key:**
+1. Go to Supabase Dashboard
+2. Select your project
+3. Go to Settings > API
+4. Copy the "service_role" key (not the anon key!)
+
+⚠️ **IMPORTANT:** Never commit `.env.local` to git! This file should be in `.gitignore`.
+
+**Note:** The `SUPABASE_SERVICE_ROLE_KEY` is required for creating new users via the admin interface. This ensures that creating a new user doesn't change your current session.
 
 ### 3. Setup Database
 
