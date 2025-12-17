@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Search, X, ChevronDown } from "lucide-react";
 
 export function ProjectDialog({
   project,
@@ -174,6 +175,8 @@ export function ProjectDialog({
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [productPopoverOpen, setProductPopoverOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -680,41 +683,188 @@ export function ProjectDialog({
             </select>
           </div>
 
-          <div>
+          <div className="relative">
             <Label className="text-slate-700 dark:text-slate-300">Products *</Label>
-            <select
-              multiple
-              value={formData.product_ids}
-              onChange={(e) => {
-                const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                // Initialize distributor for new products
-                const newDistributors = { ...formData.product_distributors };
-                selectedIds.forEach((id) => {
-                  if (!newDistributors[id]) {
-                    newDistributors[id] = "";
-                  }
-                });
-                // Remove distributors for unselected products
-                Object.keys(newDistributors).forEach((id) => {
-                  if (!selectedIds.includes(id)) {
-                    delete newDistributors[id];
-                  }
-                });
-                setFormData({ ...formData, product_ids: selectedIds, product_distributors: newDistributors });
-              }}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-50 min-h-[120px]"
-              size={5}
-              required
-            >
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.brand?.sub_category?.category?.name} - {product.brand?.sub_category?.name} - {product.brand?.name} - {product.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Hold Ctrl (Windows) or Cmd (Mac) to select multiple products
-            </p>
+            <div className="relative">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+                onClick={() => setProductPopoverOpen(!productPopoverOpen)}
+              >
+                <span className="truncate">
+                  {formData.product_ids.length === 0
+                    ? "Select products..."
+                    : `${formData.product_ids.length} product${formData.product_ids.length > 1 ? "s" : ""} selected`}
+                </span>
+                <ChevronDown className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${productPopoverOpen ? "rotate-180" : ""}`} />
+              </Button>
+              
+              {productPopoverOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setProductPopoverOpen(false)}
+                  />
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          placeholder="Search products..."
+                          value={productSearchQuery}
+                          onChange={(e) => setProductSearchQuery(e.target.value)}
+                          className="pl-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-50"
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {products.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                          Loading products...
+                        </div>
+                      ) : (
+                        <>
+                          {products
+                            .filter((product) => {
+                              if (!productSearchQuery) return true;
+                              const searchLower = productSearchQuery.toLowerCase();
+                              const categoryName = product.brand?.sub_category?.category?.name || "";
+                              const subCategoryName = product.brand?.sub_category?.name || "";
+                              const brandName = product.brand?.name || "";
+                              const productName = product.name || "";
+                              const productText = `${categoryName} ${subCategoryName} ${brandName} ${productName}`.toLowerCase();
+                              return productText.includes(searchLower);
+                            })
+                            .filter((product) => !formData.product_ids.includes(product.id))
+                            .map((product) => {
+                              const categoryName = product.brand?.sub_category?.category?.name || "";
+                              const subCategoryName = product.brand?.sub_category?.name || "";
+                              const brandName = product.brand?.name || "";
+                              const productName = product.name || "";
+                              const productLabel = `${categoryName} - ${subCategoryName} - ${brandName} - ${productName}`;
+                              
+                              return (
+                                <button
+                                  key={product.id}
+                                  type="button"
+                                  className="w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    
+                                    if (formData.product_ids.includes(product.id)) {
+                                      return;
+                                    }
+                                    
+                                    const newSelectedIds = [...formData.product_ids, product.id];
+                                    const newDistributors = { ...formData.product_distributors };
+                                    if (!newDistributors[product.id]) {
+                                      newDistributors[product.id] = "";
+                                    }
+                                    
+                                    setFormData({
+                                      ...formData,
+                                      product_ids: newSelectedIds,
+                                      product_distributors: newDistributors,
+                                    });
+                                    
+                                    setProductSearchQuery("");
+                                  }}
+                                >
+                                  <span className="text-sm text-slate-900 dark:text-slate-50 block">
+                                    {productLabel}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          {products.filter((product) => {
+                            if (!productSearchQuery) return false;
+                            const searchLower = productSearchQuery.toLowerCase();
+                            const categoryName = product.brand?.sub_category?.category?.name || "";
+                            const subCategoryName = product.brand?.sub_category?.name || "";
+                            const brandName = product.brand?.name || "";
+                            const productName = product.name || "";
+                            const productText = `${categoryName} ${subCategoryName} ${brandName} ${productName}`.toLowerCase();
+                            return productText.includes(searchLower);
+                          }).filter((product) => !formData.product_ids.includes(product.id)).length === 0 && productSearchQuery && (
+                            <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                              No products found
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {formData.product_ids.length > 0 && (
+                      <div className="p-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {formData.product_ids.length} selected
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({
+                              ...formData,
+                              product_ids: [],
+                              product_distributors: {},
+                            });
+                          }}
+                          className="h-7 text-xs"
+                        >
+                          Clear all
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            {formData.product_ids.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <Label className="text-slate-700 dark:text-slate-300 text-sm">Selected Products:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.product_ids.map((productId) => {
+                    const product = products.find((p) => p.id === productId);
+                    if (!product) return null;
+                    const categoryName = product.brand?.sub_category?.category?.name || "";
+                    const subCategoryName = product.brand?.sub_category?.name || "";
+                    const brandName = product.brand?.name || "";
+                    const productName = product.name || "";
+                    const productLabel = `${categoryName} - ${subCategoryName} - ${brandName} - ${productName}`;
+                    
+                    return (
+                      <div
+                        key={productId}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-md text-sm border border-blue-200 dark:border-blue-800"
+                      >
+                        <span className="truncate max-w-[300px]">{productLabel}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSelectedIds = formData.product_ids.filter((id) => id !== productId);
+                            const newDistributors = { ...formData.product_distributors };
+                            delete newDistributors[productId];
+                            setFormData({
+                              ...formData,
+                              product_ids: newSelectedIds,
+                              product_distributors: newDistributors,
+                            });
+                          }}
+                          className="ml-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded p-0.5 transition-colors"
+                          title="Remove product"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             
             {/* Distributor selection for each selected product */}
             {formData.product_ids.length > 0 && (
