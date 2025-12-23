@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { LayoutDashboard, Users, Settings, Package, Tag, Layers, ShoppingBag, Handshake, CheckCircle, Award, Truck, UserCircle, FolderKanban, ChevronRight, ChevronLeft, Database as DatabaseIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Package, Tag, Layers, ShoppingBag, Handshake, CheckCircle, Award, Truck, UserCircle, FolderKanban, ChevronRight, ChevronLeft, Database as DatabaseIcon, FileText } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,6 +25,7 @@ const masterMenuItems = [
   { label: "Sub Category", href: "/dashboard/sub-categories", icon: Layers },
   { label: "Brand", href: "/dashboard/brands", icon: Package },
   { label: "Product", href: "/dashboard/products", icon: ShoppingBag },
+  { label: "Project Types", href: "/dashboard/project-types", icon: FileText },
   { label: "Partnership", href: "/dashboard/partnerships", icon: Handshake },
   { label: "Readiness", href: "/dashboard/readiness", icon: CheckCircle },
   { label: "Certificate", href: "/dashboard/certificates", icon: Award },
