@@ -380,16 +380,31 @@ export function ProjectDetailDialog({
                           </Badge>
                         )}
                       </div>
-                      {pp.distributor?.name && (
+                      {(pp.distributor?.name || pp.project_type?.name) && (
                         <div className="mt-3 pt-3 border-t border-blue-200/60 dark:border-blue-700/50">
-                          <div className="flex items-center gap-2">
-                            <Truck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                              Distributor:
-                            </p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-slate-50">
-                              {pp.distributor.name}
-                            </p>
+                          <div className="flex flex-col gap-2">
+                            {pp.distributor?.name && (
+                              <div className="flex items-center gap-2">
+                                <Truck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                  Distributor:
+                                </p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-50">
+                                  {pp.distributor.name}
+                                </p>
+                              </div>
+                            )}
+                            {pp.project_type?.name && (
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                  Project Type:
+                                </p>
+                                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-lg shadow-sm">
+                                  {pp.project_type.name}
+                                </Badge>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
