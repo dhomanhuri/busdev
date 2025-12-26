@@ -42,6 +42,17 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - Triggers for auto-updating `updated_at`
    - Trigger for auto-creating user profile on signup
 
+### 3.1. Setup Storage Bucket (for Avatar Upload)
+
+1. Go to your Supabase project SQL Editor
+2. Run the script: `scripts/016_create_avatars_storage_bucket.sql`
+3. This will create:
+   - `avatars` storage bucket for user profile photos
+   - Storage policies for authenticated users to upload/manage their avatars
+   - Public read access for avatar images
+
+**Note:** If you get a "Bucket not found" error when uploading photos, make sure you've run this script!
+
 ### 4. Create First Admin User
 
 You can create the first admin user through Supabase Auth dashboard or run this SQL:
