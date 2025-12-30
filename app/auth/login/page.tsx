@@ -101,9 +101,9 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                    disabled={isLoading}
+                    isLoading={isLoading}
                   >
-                    {isLoading ? "Signing in..." : "Sign In"}
+                    Sign In
                   </Button>
                 </div>
               </form>

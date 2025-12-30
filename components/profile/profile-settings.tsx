@@ -215,7 +215,7 @@ export function ProfileSettings({ user, userEmail }: any) {
                 {namaLengkap
                   ? namaLengkap
                       .split(" ")
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join("")
                       .toUpperCase()
                       .slice(0, 2)
@@ -295,10 +295,10 @@ export function ProfileSettings({ user, userEmail }: any) {
             {success && <p className="text-green-400 text-sm">{success}</p>}
             <Button
               type="submit"
-              disabled={isLoading}
+              isLoading={isLoading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isLoading ? "Saving..." : "Save Changes"}
+              Save Changes
             </Button>
           </form>
         </CardContent>

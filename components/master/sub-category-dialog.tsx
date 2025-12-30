@@ -241,10 +241,10 @@ export function SubCategoryDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading}
+              isLoading={isLoading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isLoading ? "Saving..." : "Save"}
+              Save
             </Button>
           </div>
         </form>
