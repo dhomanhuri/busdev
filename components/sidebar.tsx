@@ -26,6 +26,7 @@ const masterMenuItems = [
   { label: "Brand", href: "/dashboard/brands", icon: Package },
   { label: "Product", href: "/dashboard/products", icon: ShoppingBag },
   { label: "Project Types", href: "/dashboard/project-types", icon: FileText },
+  { label: "Product Executive", href: "/dashboard/product-executives", icon: UserCircle },
   { label: "Partnership", href: "/dashboard/partnerships", icon: Handshake },
   { label: "Readiness", href: "/dashboard/readiness", icon: CheckCircle },
   { label: "Certificate", href: "/dashboard/certificates", icon: Award },

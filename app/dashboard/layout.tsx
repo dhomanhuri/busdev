@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from 'next/navigation';
 import { Sidebar } from "@/components/sidebar";
 import { TopNav } from "@/components/top-nav";
+import { Chatbot } from "@/components/chatbot";
 
 export default async function DashboardLayout({
   children,
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-auto bg-gradient-to-br from-orange-50/50 via-white to-orange-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
           {children}
         </main>
+        <Chatbot />
       </div>
     </div>
   );

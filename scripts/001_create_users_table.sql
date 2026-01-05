@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nama_lengkap TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  role TEXT NOT NULL CHECK (role IN ('Admin', 'GM', 'Sales', 'Presales', 'Engineer', 'Project Manager')),
+  role TEXT NOT NULL CHECK (role IN ('Admin', 'GM', 'Sales', 'Presales', 'Engineer', 'Project Manager', 'Marketing')),
   gm_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   department TEXT,
   status_aktif BOOLEAN DEFAULT true,

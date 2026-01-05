@@ -106,6 +106,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
               { value: "Admin", label: "Admin" },
               { value: "GM", label: "General Manager" },
               { value: "Sales", label: "AM" },
+              { value: "Marketing", label: "Marketing" },
               { value: "Presales", label: "Presales" },
               { value: "Engineer", label: "Engineer" },
               { value: "Project Manager", label: "Project Manager" },
@@ -231,6 +232,7 @@ export function UsersList({ initialUsers }: { initialUsers: any[] }) {
                             user.role === "Presales" ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white" :
                             user.role === "Engineer" ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white" :
                             user.role === "Project Manager" ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white" :
+                            user.role === "Marketing" ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white" :
                             "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
                           )}
                         >
