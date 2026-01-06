@@ -26,7 +26,7 @@ export function ProductExecutivesList({ initialExecutives }: { initialExecutives
   const filteredExecutives = executives.filter((item) => {
     const matchesSearch =
       item.brand?.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.user?.full_name.toLowerCase().includes(search.toLowerCase());
+      item.user?.nama_lengkap.toLowerCase().includes(search.toLowerCase());
     return matchesSearch;
   });
 
@@ -149,7 +149,7 @@ export function ProductExecutivesList({ initialExecutives }: { initialExecutives
                           <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
                             <UserCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                           </div>
-                          <span className="text-slate-700 dark:text-slate-300 font-medium">{item.user?.full_name}</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium">{item.user?.nama_lengkap}</span>
                         </div>
                       </td>
                       <td className="py-5 px-6 text-center">

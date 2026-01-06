@@ -57,7 +57,7 @@ export function ProductExecutiveDialog({
         .select("*")
         .eq("role", "Marketing")
         .eq("status_aktif", true)
-        .order("full_name");
+        .order("nama_lengkap");
       setMarketingUsers(usersData || []);
     };
     loadData();
@@ -202,7 +202,7 @@ export function ProductExecutiveDialog({
               <SelectContent>
                 {marketingUsers.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.full_name}
+                    {user.nama_lengkap}
                   </SelectItem>
                 ))}
               </SelectContent>
