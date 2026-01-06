@@ -111,14 +111,11 @@ export function ProductExecutiveDialog({
           .single();
 
         if (updateError) throw updateError;
+        if (!data) throw new Error("Failed to update: No data returned");
 
         setIsLoading(false);
-        setOpen(false);
-        
-        setTimeout(() => {
-          onSave(data);
-          onClose();
-        }, 100);
+        onSave(data);
+        onClose();
       } else {
         // Create new
         const { data, error: createError } = await supabase
@@ -142,16 +139,15 @@ export function ProductExecutiveDialog({
           throw createError;
         }
 
+        if (!data) throw new Error("Failed to create: No data returned");
+
         setIsLoading(false);
-        setOpen(false);
-        
-        setTimeout(() => {
-          onSave(data);
-          onClose();
-        }, 100);
+        onSave(data);
+        onClose();
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Save Error:", err);
+      setError(err.message || "An unexpected error occurred while saving.");
       setIsLoading(false);
     }
   };
